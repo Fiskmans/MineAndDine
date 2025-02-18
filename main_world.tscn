@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://mwujfi7brask"]
+
+[ext_resource type="ArrayMesh" uid="uid://dgxc4mvgeel7c" path="res://Medieval Village MegaKit[Standard]/OBJ/Prop_Wagon.obj" id="1_hlm63"]
+[ext_resource type="Script" path="res://PlayerController.cs" id="2_m5ruq"]
+
+[node name="Main world" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 1.99713, 3.12151)
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="."]
+script = ExtResource("2_m5ruq")
+
+[node name="Pivot" type="Node3D" parent="CharacterBody3D"]
+
+[node name="PropWagon" type="MeshInstance3D" parent="CharacterBody3D/Pivot"]
+transform = Transform3D(0.85071, 0, 0.525635, 0, 1, 0, -0.525635, 0, 0.85071, 0.581477, 0, 0.11319)
+mesh = ExtResource("1_hlm63")
+skeleton = NodePath("")
