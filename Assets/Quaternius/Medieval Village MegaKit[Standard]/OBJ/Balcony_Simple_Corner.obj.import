@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://gksjnl5qtnuh"
+path="res://.godot/imported/Balcony_Simple_Corner.obj-08d42ed400a5aae4e1d97c974c9f5054.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Balcony_Simple_Corner.obj-08d42ed400a5aae4e1d97c974c9f5054.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Balcony_Simple_Corner.obj"
+dest_files=["res://.godot/imported/Balcony_Simple_Corner.obj-08d42ed400a5aae4e1d97c974c9f5054.mesh", "res://.godot/imported/Balcony_Simple_Corner.obj-08d42ed400a5aae4e1d97c974c9f5054.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

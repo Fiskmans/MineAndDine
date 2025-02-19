@@ -5,6 +5,8 @@ public partial class PlayerController : CharacterBody3D
 {
     [Export]
     public int Speed { get; set; } = 14;
+    [Export]
+    public float gravity { get; set; } = 16.f;
     private Vector3 _targetVelocity = Vector3.Zero;
 
     // Called when the node enters the scene tree for the first time.
@@ -47,6 +49,22 @@ public partial class PlayerController : CharacterBody3D
 
         _targetVelocity.X = direction.X * Speed;
         _targetVelocity.Z = direction.Z * Speed;
+
+        if (IsOnFloor())
+        {
+            if (_targetVelocity.Y < 0.1f)
+            {
+                _targetVelocity.Y = 0;
+            }
+            if (Input.IsActionPressed("jump"))
+            {
+                _targetVelocity.Y = 5;
+            }
+        }
+        else
+        {
+            _targetVelocity.Y -= gravity * (float)delta;
+        }
 
         Velocity = _targetVelocity;
 

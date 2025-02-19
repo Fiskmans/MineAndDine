@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b1qcnkm53vnod"
+path="res://.godot/imported/Floor_WoodDark_OverhangCorner2.obj-abecb7d6ff0c1f51f8c7d057fdbc764d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Floor_WoodDark_OverhangCorner2.obj-abecb7d6ff0c1f51f8c7d057fdbc764d.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Floor_WoodDark_OverhangCorner2.obj"
+dest_files=["res://.godot/imported/Floor_WoodDark_OverhangCorner2.obj-abecb7d6ff0c1f51f8c7d057fdbc764d.mesh", "res://.godot/imported/Floor_WoodDark_OverhangCorner2.obj-abecb7d6ff0c1f51f8c7d057fdbc764d.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

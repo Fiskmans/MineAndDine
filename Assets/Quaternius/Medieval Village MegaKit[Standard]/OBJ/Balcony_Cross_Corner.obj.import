@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://barj4gde3rf0d"
+path="res://.godot/imported/Balcony_Cross_Corner.obj-c235e78147c961fa2ad497bb0d841855.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Balcony_Cross_Corner.obj-c235e78147c961fa2ad497bb0d841855.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Balcony_Cross_Corner.obj"
+dest_files=["res://.godot/imported/Balcony_Cross_Corner.obj-c235e78147c961fa2ad497bb0d841855.mesh", "res://.godot/imported/Balcony_Cross_Corner.obj-c235e78147c961fa2ad497bb0d841855.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

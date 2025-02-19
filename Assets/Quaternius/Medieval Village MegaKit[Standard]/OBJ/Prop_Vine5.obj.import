@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cmo5ycgxflrhb"
+path="res://.godot/imported/Prop_Vine5.obj-4cf5619a544a1f6ad538fc22cbd95b7d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Prop_Vine5.obj-4cf5619a544a1f6ad538fc22cbd95b7d.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Prop_Vine5.obj"
+dest_files=["res://.godot/imported/Prop_Vine5.obj-4cf5619a544a1f6ad538fc22cbd95b7d.mesh", "res://.godot/imported/Prop_Vine5.obj-4cf5619a544a1f6ad538fc22cbd95b7d.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

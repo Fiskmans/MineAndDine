@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dlbm2u3uqpqor"
+path="res://.godot/imported/Wall_Plaster_Window_Thin_Round.obj-e5fbd8c99396b00fec4a019e9c70d2bc.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Wall_Plaster_Window_Thin_Round.obj-e5fbd8c99396b00fec4a019e9c70d2bc.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Wall_Plaster_Window_Thin_Round.obj"
+dest_files=["res://.godot/imported/Wall_Plaster_Window_Thin_Round.obj-e5fbd8c99396b00fec4a019e9c70d2bc.mesh", "res://.godot/imported/Wall_Plaster_Window_Thin_Round.obj-e5fbd8c99396b00fec4a019e9c70d2bc.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dqpesc62n1mu4"
+path="res://.godot/imported/Window_Roof_Thin.obj-0e4cbf275e36b4eb93186bdb0e65ed1b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Window_Roof_Thin.obj-0e4cbf275e36b4eb93186bdb0e65ed1b.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Window_Roof_Thin.obj"
+dest_files=["res://.godot/imported/Window_Roof_Thin.obj-0e4cbf275e36b4eb93186bdb0e65ed1b.mesh", "res://.godot/imported/Window_Roof_Thin.obj-0e4cbf275e36b4eb93186bdb0e65ed1b.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

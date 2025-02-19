@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://j40ab0p4e8ok"
+path="res://.godot/imported/Overhang_UnevenBrick_Short.obj-ff1ac2ffd673188d3ae610b5a908f525.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Overhang_UnevenBrick_Short.obj-ff1ac2ffd673188d3ae610b5a908f525.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Overhang_UnevenBrick_Short.obj"
+dest_files=["res://.godot/imported/Overhang_UnevenBrick_Short.obj-ff1ac2ffd673188d3ae610b5a908f525.mesh", "res://.godot/imported/Overhang_UnevenBrick_Short.obj-ff1ac2ffd673188d3ae610b5a908f525.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

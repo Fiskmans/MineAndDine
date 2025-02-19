@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://otyyktfstu8d"
+path="res://.godot/imported/Corner_Exterior_Brick.obj-584e15fe1f5632e9b1854f1720e978ff.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Corner_Exterior_Brick.obj-584e15fe1f5632e9b1854f1720e978ff.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Corner_Exterior_Brick.obj"
+dest_files=["res://.godot/imported/Corner_Exterior_Brick.obj-584e15fe1f5632e9b1854f1720e978ff.mesh", "res://.godot/imported/Corner_Exterior_Brick.obj-584e15fe1f5632e9b1854f1720e978ff.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

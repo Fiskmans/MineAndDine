@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bat44tqlp7il8"
+path="res://.godot/imported/Floor_WoodLight.obj-2ebe1ae2574ae293c58a015808ad5a38.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Floor_WoodLight.obj-2ebe1ae2574ae293c58a015808ad5a38.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Floor_WoodLight.obj"
+dest_files=["res://.godot/imported/Floor_WoodLight.obj-2ebe1ae2574ae293c58a015808ad5a38.mesh", "res://.godot/imported/Floor_WoodLight.obj-2ebe1ae2574ae293c58a015808ad5a38.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

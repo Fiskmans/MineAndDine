@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cr0wa3qorcomq"
+path="res://.godot/imported/DoorFrame_Round_WoodDark.obj-712f3000a2ef33bf16689e423a8635ca.mesh"
+
+[deps]
+
+files=["res://.godot/imported/DoorFrame_Round_WoodDark.obj-712f3000a2ef33bf16689e423a8635ca.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/DoorFrame_Round_WoodDark.obj"
+dest_files=["res://.godot/imported/DoorFrame_Round_WoodDark.obj-712f3000a2ef33bf16689e423a8635ca.mesh", "res://.godot/imported/DoorFrame_Round_WoodDark.obj-712f3000a2ef33bf16689e423a8635ca.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

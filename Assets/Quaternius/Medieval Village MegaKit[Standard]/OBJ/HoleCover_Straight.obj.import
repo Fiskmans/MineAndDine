@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bq8crx5r6tb1m"
+path="res://.godot/imported/HoleCover_Straight.obj-2aa42722991be75d1878e26af441390b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/HoleCover_Straight.obj-2aa42722991be75d1878e26af441390b.mesh"]
+
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/HoleCover_Straight.obj"
+dest_files=["res://.godot/imported/HoleCover_Straight.obj-2aa42722991be75d1878e26af441390b.mesh", "res://.godot/imported/HoleCover_Straight.obj-2aa42722991be75d1878e26af441390b.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false
