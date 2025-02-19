@@ -6,7 +6,7 @@ public partial class PlayerController : CharacterBody3D
     [Export]
     public int Speed { get; set; } = 14;
     [Export]
-    public float gravity { get; set; } = 16.f;
+    public float gravity { get; set; } = 16;
     private Vector3 _targetVelocity = Vector3.Zero;
 
     // Called when the node enters the scene tree for the first time.
@@ -68,8 +68,25 @@ public partial class PlayerController : CharacterBody3D
 
         Velocity = _targetVelocity;
 
-        MoveAndSlide();
+        if (MoveAndSlide())
+            HandleCollision();
+    }
 
+    private void HandleCollision()
+    {
+        for (int i = 0; i < GetSlideCollisionCount(); i++)
+        {
 
+            KinematicCollision3D collision = GetSlideCollision(i);
+
+            GodotObject obj = collision.GetCollider();
+
+            TerrainGenerator terrain = obj as TerrainGenerator;
+
+            if (terrain != null)
+            {
+                terrain.GetChunkAt(Position);
+            }
+        }
     }
 }

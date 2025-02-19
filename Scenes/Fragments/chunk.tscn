@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://dxfbdlpqbpxii"]
+
+[ext_resource type="Script" path="res://Chunk.cs" id="1_0u3yb"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_y85ps"]
+
+[node name="Chunk" type="Node3D"]
+script = ExtResource("1_0u3yb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_y85ps")
