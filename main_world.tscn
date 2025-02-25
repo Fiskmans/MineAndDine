@@ -1,9 +1,11 @@
-[gd_scene load_steps=14 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=19 format=3 uid="uid://mwujfi7brask"]
 
 [ext_resource type="ArrayMesh" uid="uid://dgxc4mvgeel7c" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Prop_Wagon.obj" id="1_hlm63"]
 [ext_resource type="Texture2D" uid="uid://i0wob40h6r67" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_WoodTrim_BaseColor.png" id="2_jx38d"]
 [ext_resource type="Script" path="res://PlayerController.cs" id="2_m5ruq"]
 [ext_resource type="Script" path="res://TerrainGenerator.cs" id="3_wcmku"]
+[ext_resource type="Texture2D" uid="uid://bm7cuj8d1s41c" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Brick_BaseColor.png" id="5_lv4yp"]
+[ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tvbru"]
 albedo_texture = ExtResource("2_jx38d")
@@ -29,6 +31,14 @@ ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
 ambient_light_sky_contribution = 0.0
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_clnj1"]
+albedo_texture = ExtResource("5_ly5bc")
+
+[sub_resource type="BoxMesh" id="BoxMesh_lmc21"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ac4f"]
+albedo_texture = ExtResource("5_lv4yp")
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_07y88"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bu80i"]
@@ -36,16 +46,21 @@ albedo_color = Color(0.310385, 0.508863, 9.62615e-08, 1)
 
 [node name="Main world" type="Node3D"]
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 1.99713, 3.12151)
-
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03114, 0)
 script = ExtResource("2_m5ruq")
 
-[node name="Pivot" type="Node3D" parent="CharacterBody3D"]
+[node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
-[node name="PropWagon" type="MeshInstance3D" parent="CharacterBody3D/Pivot"]
+[node name="cameraArm" type="SpringArm3D" parent="CharacterBody3D/cameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+spring_length = 4.0
+
+[node name="playerCamera" type="Camera3D" parent="CharacterBody3D/cameraPivot/cameraArm"]
+
+[node name="meshPivot" type="Node3D" parent="CharacterBody3D"]
+
+[node name="PropWagon" type="MeshInstance3D" parent="CharacterBody3D/meshPivot"]
 transform = Transform3D(0.85071, 0, 0.525635, 0, 1, 0, -0.525635, 0, 0.85071, 0.581477, 0, 0.11319)
 material_override = SubResource("StandardMaterial3D_tvbru")
 mesh = ExtResource("1_hlm63")
@@ -66,7 +81,14 @@ shape = SubResource("BoxShape3D_v3q5b")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_6m1a7")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="WorldEnvironment"]
+[node name="center" type="MeshInstance3D" parent="WorldEnvironment"]
+transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.1, 0, 0.5, 0)
+material_override = SubResource("StandardMaterial3D_clnj1")
+mesh = SubResource("BoxMesh_lmc21")
+skeleton = NodePath("../floor")
+
+[node name="floor" type="MeshInstance3D" parent="WorldEnvironment"]
 transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_8ac4f")
 mesh = SubResource("PlaneMesh_07y88")
 surface_material_override/0 = SubResource("StandardMaterial3D_bu80i")
