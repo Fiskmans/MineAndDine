@@ -21,7 +21,6 @@ public partial class PlayerController : CharacterBody3D
 	{
 		cameraPivot = GetNode<Node3D>("cameraPivot");
 		camera = GetNode<Camera3D>("cameraPivot/cameraArm/playerCamera");
-		Input.MouseMode = Input.MouseModeEnum.Captured;
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -40,20 +39,38 @@ public partial class PlayerController : CharacterBody3D
 
 		if (Input.IsActionPressed("move_right"))
 		{
+<<<<<<< HEAD
 			direction += right;
 		}
 		if (Input.IsActionPressed("move_left"))
 		{
 			direction -= right;
+=======
+			RotateY(-2.0f * (float)delta);
 		}
+		if (Input.IsActionPressed("move_left"))
+		{
+			RotateY(2.0f * (float)delta);
+>>>>>>> 794c051 (marching cubes :))
+		}
+		/*
 		if (Input.IsActionPressed("move_back"))
 		{
+<<<<<<< HEAD
 			direction -= forward;
 		}
 		if (Input.IsActionPressed("move_forward"))
 		{
 			direction += forward;
 		}
+=======
+			direction.Z += 1.0f * (float)delta;
+        }
+		if (Input.IsActionPressed("move_forward"))
+		{
+			direction.Z -= 1.0f * (float)delta;
+        }*/
+>>>>>>> 794c051 (marching cubes :))
 
 		if (direction != Vector3.Zero)
 		{
@@ -95,32 +112,17 @@ public partial class PlayerController : CharacterBody3D
 			{
 				GetTree().Quit();
 			}
-
-			if (keyEvent.Keycode == Key.Alt)
-			{
-				if (keyEvent.IsPressed())
-				{
-					Input.MouseMode = Input.MouseModeEnum.Visible;
-				}
-				else
-				{
-					Input.MouseMode = Input.MouseModeEnum.Captured;
-				}
-			}
 		}
-
-		if (Input.MouseMode == Input.MouseModeEnum.Captured)
+		
+		if (@event is InputEventMouseMotion mouseEvent)
 		{
-			if (@event is InputEventMouseMotion mouseEvent)
-			{
-				Vector3 cameraRot = cameraPivot.GetRotation();
+			Vector3 cameraRot = cameraPivot.GetRotation();
 			
-				cameraRot.X -= mouseEvent.GetRelative().Y * cameraSensitivity;
-				cameraRot.X = Mathf.Clamp(cameraRot.X, -cameraTiltLimit, cameraTiltLimit);
-				cameraRot.Y -= mouseEvent.GetRelative().X * cameraSensitivity;
+			cameraRot.X -= mouseEvent.GetRelative().Y * cameraSensitivity;
+			cameraRot.X = Mathf.Clamp(cameraRot.X, -cameraTiltLimit, cameraTiltLimit);
+			cameraRot.Y -= mouseEvent.GetRelative().X * cameraSensitivity;
 			
-				cameraPivot.SetRotation(cameraRot);
-			}
+			cameraPivot.SetRotation(cameraRot);
 		}
 	}
 

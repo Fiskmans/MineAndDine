@@ -49,10 +49,10 @@ albedo_color = Color(0.310385, 0.508863, 9.62615e-08, 1)
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03114, 0)
 script = ExtResource("2_m5ruq")
-gravity = 8.0
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
+<<<<<<< HEAD
 [node name="cameraArm" type="SpringArm3D" parent="CharacterBody3D/cameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 spring_length = 4.0
@@ -63,16 +63,20 @@ spring_length = 4.0
 
 [node name="PropWagon" type="MeshInstance3D" parent="CharacterBody3D/meshPivot"]
 transform = Transform3D(0.85071, 0, 0.525635, 0, 1, 0, -0.525635, 0, 0.85071, 0.581477, 0, 0.11319)
+=======
+[node name="PropWagon" type="MeshInstance3D" parent="CharacterBody3D/Pivot"]
+transform = Transform3D(-0.0999972, 0, 0.000752219, 0, 0.1, 0, -0.000752219, 0, -0.0999972, 0.0609499, 0, 0.157327)
+>>>>>>> 794c051 (marching cubes :))
 material_override = SubResource("StandardMaterial3D_tvbru")
 mesh = ExtResource("1_hlm63")
 skeleton = NodePath("")
 
+[node name="MainCamera" type="Camera3D" parent="CharacterBody3D/Pivot"]
+transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 2.36464, 4.78508)
+
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87186, 0)
 shape = SubResource("CapsuleShape3D_fq6ae")
-
-[node name="CharacterBody3D_Pivot#MainCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 2.36464, 4.78508)
 
 [node name="Terrain" type="StaticBody3D" parent="."]
 script = ExtResource("3_wcmku")
