@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://brxjfx75wub37"
-path.s3tc="res://.godot/imported/T_RoundTiles_Normal.png-2ddc0237086277a7565f43f2d67b7052.s3tc.ctex"
+path.s3tc="res://.godot/imported/T_RoundTiles_Normal.png-bb25a9cb67780e7d78674da035865539.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/textures/T_RoundTiles_Normal.png"
-dest_files=["res://.godot/imported/T_RoundTiles_Normal.png-2ddc0237086277a7565f43f2d67b7052.s3tc.ctex"]
+source_file="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_RoundTiles_Normal.png"
+dest_files=["res://.godot/imported/T_RoundTiles_Normal.png-bb25a9cb67780e7d78674da035865539.s3tc.ctex"]
 
 [params]
 

@@ -66,13 +66,16 @@ material_override = SubResource("StandardMaterial3D_tvbru")
 mesh = ExtResource("1_hlm63")
 skeleton = NodePath("")
 
+[node name="MainCamera" type="Camera3D" parent="CharacterBody3D/Pivot"]
+transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 2.36464, 4.78508)
+
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87186, 0)
 shape = SubResource("CapsuleShape3D_fq6ae")
 
 [node name="Terrain" type="StaticBody3D" parent="."]
 script = ExtResource("3_wcmku")
-ChunkSize = 8.0
+ChunkSize = 1.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.684946, 0)

@@ -45,6 +45,7 @@ public partial class PlayerController : CharacterBody3D
 		{
 			direction -= right;
 		}
+		/*
 		if (Input.IsActionPressed("move_back"))
 		{
 			direction -= forward;

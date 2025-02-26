@@ -6,9 +6,9 @@ using System.Collections.Generic;
 public partial class TerrainGenerator : Node3D
 {
 	[Export]
-	public double ChunkSize = 16;
+	public float ChunkSize = 16;
 
-	Dictionary<Chunk.Pos, Chunk> myLoadedChunks = new Dictionary<Chunk.Pos, Chunk>();
+	Dictionary<Vector3I, Chunk> myLoadedChunks = new Dictionary<Vector3I, Chunk>();
 
     [Export]
     PackedScene chunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
@@ -16,6 +16,13 @@ public partial class TerrainGenerator : Node3D
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		for (int x = -10; x < 10; x++)
+        {
+            for (int y = 0; y < 10; y++)
+            {
+				GetChunkAt(new Vector3I(x, y, 0));
+            }
+        }
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -23,29 +30,34 @@ public partial class TerrainGenerator : Node3D
 	{
 	}
 
-	private Chunk.Pos ChunkPosFromWorldPos(Vector3 aPosition)
+	private Vector3I ChunkPosFromWorldPos(Vector3 aPosition)
 	{
-		return new Chunk.Pos
-		{
-			x = (int)(aPosition.X / ChunkSize),
-			y = (int)(aPosition.Y / ChunkSize),
-			z = (int)(aPosition.Z / ChunkSize)
-		};
+		return new Vector3I(
+			(int)(aPosition.X / ChunkSize),
+			(int)(aPosition.Y / ChunkSize),
+			(int)(aPosition.Z / ChunkSize));
 	}
 
-	private Vector3 WorldPosFromChunkPos(Chunk.Pos aPosition)
+	private Vector3 WorldPosFromChunkPos(Vector3I aPosition)
 	{
 		return new Vector3
 		{
-			X = (int)(aPosition.x * ChunkSize),
-			Y = (int)(aPosition.y * ChunkSize),
-			Z = (int)(aPosition.z * ChunkSize)
+			X = (int)(aPosition.X * ChunkSize),
+			Y = (int)(aPosition.Y * ChunkSize),
+			Z = (int)(aPosition.Z * ChunkSize)
 		};
 	}
 
+	public Chunk TryGetChunk(Vector3I aChunkPos)
+	{
+		Chunk c = null;
+		myLoadedChunks.TryGetValue(aChunkPos, out c);
+		return c;
+    }
+
 	public Chunk GetChunkAt(Vector3 aPosition)
 	{
-		Chunk.Pos pos = ChunkPosFromWorldPos(aPosition);
+		Vector3I pos = ChunkPosFromWorldPos(aPosition);
 
 		Chunk res;
 
@@ -53,7 +65,9 @@ public partial class TerrainGenerator : Node3D
 			return res;
 
 		res = (Chunk)chunkScene.Instantiate();
-		res.Position = WorldPosFromChunkPos(pos);
+		res.ChunkPos = pos;
+		res.Owner = this;
+        res.Position = WorldPosFromChunkPos(pos);
 
 		myLoadedChunks.Add(pos, res);
 
