@@ -13,21 +13,33 @@ public partial class TerrainGenerator : Node3D
     [Export]
     PackedScene chunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
 
+	public delegate void ChunkedChangeHandler(Chunk aChunk);
+
+	public event ChunkedChangeHandler OnChunkChange;
+
+    List<Chunk> _myModifiedChunks = new List<Chunk>();
+    List<Chunk> myModifiedChunks = new List<Chunk>();
+
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-		for (int x = -10; x < 10; x++)
-        {
-            for (int y = 0; y < 10; y++)
-            {
-				GetChunkAt(new Vector3I(x, y, 0));
-            }
-        }
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		// swap buffers so we don't end up in infinite loops
+		(_myModifiedChunks, myModifiedChunks) = (myModifiedChunks, _myModifiedChunks);
+
+		if (OnChunkChange != null)
+            _myModifiedChunks.ForEach(OnChunkChange.Invoke);
+
+        _myModifiedChunks.Clear();
+	}
+
+	public void RegisterModification(Chunk aChunk)
+	{
+		myModifiedChunks.Add(aChunk);
 	}
 
 	private Vector3I ChunkPosFromWorldPos(Vector3 aPosition)
@@ -66,7 +78,7 @@ public partial class TerrainGenerator : Node3D
 
 		res = (Chunk)chunkScene.Instantiate();
 		res.ChunkPos = pos;
-		res.Owner = this;
+		res.OwningTerrain = this;
         res.Position = WorldPosFromChunkPos(pos);
 
 		myLoadedChunks.Add(pos, res);

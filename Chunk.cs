@@ -11,19 +11,12 @@ public partial class Chunk : Node3D
     [Export]
     public Vector3I ChunkPos = new Vector3I(0, 0, 0);
 
-    public TerrainGenerator Owner = null;
+    public TerrainGenerator OwningTerrain = null;
 
     ArrayMesh myMesh = new ArrayMesh();
     Material myMaterial;
 
-    public float _surfaceValue = 0.5f;
-	[Export]
-    public float surfaceValue
-    {
-        get { return _surfaceValue; }
-        set { _surfaceValue = value; RegenerateMesh(); }
-    }
-
+    public const float SurfaceValue = 0.5f;
 
     public struct Voxel
 	{
@@ -54,16 +47,15 @@ public partial class Chunk : Node3D
         
 		myVoxels = new Voxel[Resolution, Resolution, Resolution];
 
-        GD.Print(ChunkPos);
-
 		for (int x = 0; x < Resolution; x++)
 		{
 			for (int y = 0; y < Resolution; y++)
 			{
 				for (int z = 0; z < Resolution; z++)
 				{
-                    float density = 1.0f - z / (float)Resolution;
+                    float density = 1.0f - y / (float)Resolution;
 
+                    density += ChunkPos.Y * 1.0f;
                     density += ChunkPos.X * 0.05f;
                     density += ChunkPos.Y * -0.1f;
                     density += GD.Randf() * 0.03f;
@@ -73,27 +65,36 @@ public partial class Chunk : Node3D
 			}
 		}
 
-
         MeshInstance3D meshComp = GetNode<MeshInstance3D>("Mesh");
 
         myMaterial = meshComp.Mesh.SurfaceGetMaterial(0);
 
         meshComp.Mesh = myMesh;
 
-        RegenerateMesh();
+        OwningTerrain.OnChunkChange += OwningTerrain_OnChunkChange; ;
+        OwningTerrain.RegisterModification(this);
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+    private void OwningTerrain_OnChunkChange(Chunk aChunk)
     {
-        if (Input.IsActionPressed("move_back"))
+        if (aChunk == this)
         {
-            surfaceValue += 0.1f * (float)delta;
+            RegenerateMesh();
+            return;
         }
-        if (Input.IsActionPressed("move_forward"))
+
+        Vector3I offset = aChunk.ChunkPos - ChunkPos;
+
+        if (offset.LengthSquared() < 4) // immediate neighbor
         {
-            surfaceValue -= 0.1f * (float)delta;
+            RegenerateMesh();
+            return;
         }
+    }
+
+    // Called every frame. 'delta' is the elapsed time since the previous frame.
+    public override void _Process(double delta)
+    {
     }
 
     Voxel VoxelAt(Vector3I aPos)
@@ -117,7 +118,7 @@ public partial class Chunk : Node3D
             pos.Z = 0;
         }
 
-        Chunk inChunk = Owner.TryGetChunk(inChunkPos);
+        Chunk inChunk = OwningTerrain.TryGetChunk(inChunkPos);
 
         if (inChunk == null)
             return NullVoxel;
@@ -190,30 +191,30 @@ public partial class Chunk : Node3D
         };
 
         int index = 0;
-        if (corners[0].Density < surfaceValue) index += 1;
-        if (corners[1].Density < surfaceValue) index += 2;
-        if (corners[2].Density < surfaceValue) index += 4;
-        if (corners[3].Density < surfaceValue) index += 8;
-        if (corners[4].Density < surfaceValue) index += 16;
-        if (corners[5].Density < surfaceValue) index += 32;
-        if (corners[6].Density < surfaceValue) index += 64;
-        if (corners[7].Density < surfaceValue) index += 128;
+        if (corners[0].Density < SurfaceValue) index += 1;
+        if (corners[1].Density < SurfaceValue) index += 2;
+        if (corners[2].Density < SurfaceValue) index += 4;
+        if (corners[3].Density < SurfaceValue) index += 8;
+        if (corners[4].Density < SurfaceValue) index += 16;
+        if (corners[5].Density < SurfaceValue) index += 32;
+        if (corners[6].Density < SurfaceValue) index += 64;
+        if (corners[7].Density < SurfaceValue) index += 128;
         //GD.Print(index);
 
         Vector3[] edges =
         {
-            PointOnEdge(0, 1, Mathf.InverseLerp(corners[0].Density, corners[1].Density, surfaceValue)),
-            PointOnEdge(1, 2, Mathf.InverseLerp(corners[1].Density, corners[2].Density, surfaceValue)),
-            PointOnEdge(2, 3, Mathf.InverseLerp(corners[2].Density, corners[3].Density, surfaceValue)),
-            PointOnEdge(3, 0, Mathf.InverseLerp(corners[3].Density, corners[0].Density, surfaceValue)),
-            PointOnEdge(4, 5, Mathf.InverseLerp(corners[4].Density, corners[5].Density, surfaceValue)),
-            PointOnEdge(5, 6, Mathf.InverseLerp(corners[5].Density, corners[6].Density, surfaceValue)),
-            PointOnEdge(6, 7, Mathf.InverseLerp(corners[6].Density, corners[7].Density, surfaceValue)),
-            PointOnEdge(7, 4, Mathf.InverseLerp(corners[7].Density, corners[4].Density, surfaceValue)),
-            PointOnEdge(0, 4, Mathf.InverseLerp(corners[0].Density, corners[4].Density, surfaceValue)),
-            PointOnEdge(1, 5, Mathf.InverseLerp(corners[1].Density, corners[5].Density, surfaceValue)),
-            PointOnEdge(2, 6, Mathf.InverseLerp(corners[2].Density, corners[6].Density, surfaceValue)),
-            PointOnEdge(3, 7, Mathf.InverseLerp(corners[3].Density, corners[7].Density, surfaceValue))
+            PointOnEdge(0, 1, Mathf.InverseLerp(corners[0].Density, corners[1].Density, SurfaceValue)),
+            PointOnEdge(1, 2, Mathf.InverseLerp(corners[1].Density, corners[2].Density, SurfaceValue)),
+            PointOnEdge(2, 3, Mathf.InverseLerp(corners[2].Density, corners[3].Density, SurfaceValue)),
+            PointOnEdge(3, 0, Mathf.InverseLerp(corners[3].Density, corners[0].Density, SurfaceValue)),
+            PointOnEdge(4, 5, Mathf.InverseLerp(corners[4].Density, corners[5].Density, SurfaceValue)),
+            PointOnEdge(5, 6, Mathf.InverseLerp(corners[5].Density, corners[6].Density, SurfaceValue)),
+            PointOnEdge(6, 7, Mathf.InverseLerp(corners[6].Density, corners[7].Density, SurfaceValue)),
+            PointOnEdge(7, 4, Mathf.InverseLerp(corners[7].Density, corners[4].Density, SurfaceValue)),
+            PointOnEdge(0, 4, Mathf.InverseLerp(corners[0].Density, corners[4].Density, SurfaceValue)),
+            PointOnEdge(1, 5, Mathf.InverseLerp(corners[1].Density, corners[5].Density, SurfaceValue)),
+            PointOnEdge(2, 6, Mathf.InverseLerp(corners[2].Density, corners[6].Density, SurfaceValue)),
+            PointOnEdge(3, 7, Mathf.InverseLerp(corners[3].Density, corners[7].Density, SurfaceValue))
         };
                 
         for (int i = 0; TriTable[index, i] != -1; i += 3)
