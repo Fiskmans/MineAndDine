@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dxfbdlpqbpxii"]
+[gd_scene load_steps=6 format=3 uid="uid://dxfbdlpqbpxii"]
 
 [ext_resource type="Script" path="res://Chunk.cs" id="1_0u3yb"]
 [ext_resource type="Shader" path="res://Shaders/Angle.gdshader" id="2_i3xxu"]
@@ -10,10 +10,17 @@ shader = ExtResource("2_i3xxu")
 [sub_resource type="BoxMesh" id="BoxMesh_2dxxd"]
 material = SubResource("ShaderMaterial_bo4vu")
 
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_ce0ax"]
+
 [node name="Chunk" type="Node3D"]
 script = ExtResource("1_0u3yb")
 Resolution = 8
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.498455, 0.502596, 0.498641)
 mesh = SubResource("BoxMesh_2dxxd")
+
+[node name="Collision" type="StaticBody3D" parent="."]
+collision_layer = 3
+
+[node name="CollisionMesh" type="CollisionShape3D" parent="Collision"]
+shape = SubResource("ConcavePolygonShape3D_ce0ax")

@@ -1,14 +1,10 @@
-[gd_scene load_steps=19 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=17 format=3 uid="uid://mwujfi7brask"]
 
-[ext_resource type="ArrayMesh" uid="uid://dgxc4mvgeel7c" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/OBJ/Prop_Wagon.obj" id="1_hlm63"]
-[ext_resource type="Texture2D" uid="uid://i0wob40h6r67" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_WoodTrim_BaseColor.png" id="2_jx38d"]
 [ext_resource type="Script" path="res://PlayerController.cs" id="2_m5ruq"]
+[ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="2_qoadf"]
 [ext_resource type="Script" path="res://TerrainGenerator.cs" id="3_wcmku"]
 [ext_resource type="Texture2D" uid="uid://bm7cuj8d1s41c" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Brick_BaseColor.png" id="5_lv4yp"]
 [ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tvbru"]
-albedo_texture = ExtResource("2_jx38d")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fq6ae"]
 
@@ -47,9 +43,10 @@ albedo_color = Color(0.310385, 0.508863, 9.62615e-08, 1)
 [node name="Main world" type="Node3D"]
 
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.03114, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04997, 0)
 script = ExtResource("2_m5ruq")
 gravity = 8.0
+Reach = 100.0
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
@@ -61,22 +58,40 @@ spring_length = 4.0
 
 [node name="meshPivot" type="Node3D" parent="CharacterBody3D"]
 
-[node name="PropWagon" type="MeshInstance3D" parent="CharacterBody3D/meshPivot"]
-transform = Transform3D(0.85071, 0, 0.525635, 0, 1, 0, -0.525635, 0, 0.85071, 0.581477, 0, 0.11319)
-material_override = SubResource("StandardMaterial3D_tvbru")
-mesh = ExtResource("1_hlm63")
-skeleton = NodePath("")
+[node name="Prop_Vine12" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.20619, 0)
+
+[node name="Prop_Vine13" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(0.87165, 0, 0.490128, 0, 1, 0, -0.490128, 0, 0.87165, 0, 1.20619, 0)
+
+[node name="Prop_Vine14" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(0.470781, 0, 0.88225, 0, 1, 0, -0.88225, 0, 0.470781, 0, 1.20619, 0)
+
+[node name="Prop_Vine15" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(-0.188633, 0, 0.982048, 0, 1, 0, -0.982048, 0, -0.188633, 0, 1.20619, 0)
+
+[node name="Prop_Vine16" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(-0.787505, 0, 0.616308, 0, 1, 0, -0.616308, 0, -0.787505, 0, 1.20619, 0)
+
+[node name="Prop_Vine17" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(-0.972828, 0, 0.231527, 0, 1, 0, -0.231527, 0, -0.972828, 0, 1.20619, 0)
+
+[node name="Prop_Vine18" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(-0.726203, 0, -0.68748, 0, 1, 0, 0.68748, 0, -0.726203, 0, 1.20619, 0)
+
+[node name="Prop_Vine19" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
+transform = Transform3D(-0.726203, 0, -0.68748, 0, 1, 0, 0.68748, 0, -0.726203, 0, 1.20619, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.87186, 0)
 shape = SubResource("CapsuleShape3D_fq6ae")
 
 [node name="CharacterBody3D_Pivot#MainCamera" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 2.36464, 4.78508)
 
 [node name="Terrain" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
 script = ExtResource("3_wcmku")
-ChunkSize = 1.0
+ChunkSize = 5.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.684946, 0)

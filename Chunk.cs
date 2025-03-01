@@ -8,12 +8,15 @@ public partial class Chunk : Node3D
 	[Export]
 	public int Resolution { get; set; } = 16;
 
+    public float Size = 1;
+
     [Export]
     public Vector3I ChunkPos = new Vector3I(0, 0, 0);
 
     public TerrainGenerator OwningTerrain = null;
 
     ArrayMesh myMesh = new ArrayMesh();
+    ConcavePolygonShape3D myCollisionMesh;
     Material myMaterial;
 
     public const float SurfaceValue = 0.5f;
@@ -55,9 +58,9 @@ public partial class Chunk : Node3D
 				{
                     float density = 1.0f - y / (float)Resolution;
 
-                    density += ChunkPos.Y * 1.0f;
+                    density -= ChunkPos.Y * 1.0f;
                     density += ChunkPos.X * 0.05f;
-                    density += ChunkPos.Y * -0.1f;
+                    density += ChunkPos.Z * -0.1f;
                     density += GD.Randf() * 0.03f;
 
                     myVoxels[x, y, z] = new Voxel { Density = density};
@@ -71,26 +74,11 @@ public partial class Chunk : Node3D
 
         meshComp.Mesh = myMesh;
 
-        OwningTerrain.OnChunkChange += OwningTerrain_OnChunkChange; ;
+        myCollisionMesh = new ConcavePolygonShape3D();
+        GetNode<CollisionShape3D>("Collision/CollisionMesh").Shape = myCollisionMesh;
+
         OwningTerrain.RegisterModification(this);
 	}
-
-    private void OwningTerrain_OnChunkChange(Chunk aChunk)
-    {
-        if (aChunk == this)
-        {
-            RegenerateMesh();
-            return;
-        }
-
-        Vector3I offset = aChunk.ChunkPos - ChunkPos;
-
-        if (offset.LengthSquared() < 4) // immediate neighbor
-        {
-            RegenerateMesh();
-            return;
-        }
-    }
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
@@ -159,6 +147,8 @@ public partial class Chunk : Node3D
             myMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
             myMesh.SurfaceSetMaterial(0, myMaterial);
         }
+
+        myCollisionMesh.SetFaces(vertices.ToArray());
 	}
 
     private Vector3 PointOnEdge(int firstCorner, int secondCorner, float aWeigth)
@@ -175,7 +165,7 @@ public partial class Chunk : Node3D
 
 	private void GenerateFragment(Vector3I aSubPosition, List<Vector3> aVertexSink, List<Vector3> aNormalSink)
     {
-        float unit = 1.0f / Resolution;
+        float unit = 1.0f / Resolution * Size;
 
 		Vector3 orig = (Vector3)aSubPosition * unit;
 

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 
 public partial class TerrainGenerator : Node3D
@@ -17,8 +18,9 @@ public partial class TerrainGenerator : Node3D
 
 	public event ChunkedChangeHandler OnChunkChange;
 
-    List<Chunk> _myModifiedChunks = new List<Chunk>();
-    List<Chunk> myModifiedChunks = new List<Chunk>();
+    HashSet<Chunk> _myModifiedChunks = new HashSet<Chunk>();
+    HashSet<Chunk> myModifiedChunks = new HashSet<Chunk>();
+    HashSet<Chunk> myChunksToRemesh = new HashSet<Chunk>();
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -31,8 +33,20 @@ public partial class TerrainGenerator : Node3D
 		// swap buffers so we don't end up in infinite loops
 		(_myModifiedChunks, myModifiedChunks) = (myModifiedChunks, _myModifiedChunks);
 
+		foreach (Chunk chunk in myChunksToRemesh)
+		{
+            chunk.RegenerateMesh();
+		}
+
+		myChunksToRemesh.Clear();
+
 		if (OnChunkChange != null)
-            _myModifiedChunks.ForEach(OnChunkChange.Invoke);
+		{
+			foreach (Chunk c in _myModifiedChunks)
+			{
+				OnChunkChange.Invoke(c);
+			}
+		}
 
         _myModifiedChunks.Clear();
 	}
@@ -40,9 +54,23 @@ public partial class TerrainGenerator : Node3D
 	public void RegisterModification(Chunk aChunk)
 	{
 		myModifiedChunks.Add(aChunk);
+
+		for (int x = -1; x <= 0; x++)
+		{
+			for (int y = -1; y <= 0; y++)
+			{
+				for (int z = -1; z <= 0; z++)
+				{
+					Chunk c = TryGetChunk(aChunk.ChunkPos + new Vector3I(x, y, z));
+
+					if (c != null)
+						myChunksToRemesh.Add(c);
+				}
+			}
+		}
 	}
 
-	private Vector3I ChunkPosFromWorldPos(Vector3 aPosition)
+	public Vector3I ChunkPosFromWorldPos(Vector3 aPosition)
 	{
 		return new Vector3I(
 			(int)(aPosition.X / ChunkSize),
@@ -67,21 +95,39 @@ public partial class TerrainGenerator : Node3D
 		return c;
     }
 
-	public Chunk GetChunkAt(Vector3 aPosition)
+	public void Touch(Vector3I aFrom, Vector3I aTo)
 	{
-		Vector3I pos = ChunkPosFromWorldPos(aPosition);
+		for (int x = aFrom.X; x <= aTo.X; x++)
+		{
+            for (int y = aFrom.Y; y <= aTo.Y; y++)
+            {
+                for (int z = aFrom.Z; z <= aTo.Z; z++)
+                {
+					Touch(new Vector3I(x, y, z));
+                }
+            }
+        }
+    }
 
+	public void Touch(Vector3I aChunkPos)
+	{
+		ChunkAt(aChunkPos);
+    }
+
+	public Chunk ChunkAt(Vector3I aPosition)
+	{
 		Chunk res;
 
-		if (myLoadedChunks.TryGetValue(pos, out res))
+		if (myLoadedChunks.TryGetValue(aPosition, out res))
 			return res;
 
 		res = (Chunk)chunkScene.Instantiate();
-		res.ChunkPos = pos;
+		res.ChunkPos = aPosition;
+		res.Size = ChunkSize;
 		res.OwningTerrain = this;
-        res.Position = WorldPosFromChunkPos(pos);
+        res.Position = WorldPosFromChunkPos(aPosition);
 
-		myLoadedChunks.Add(pos, res);
+		myLoadedChunks.Add(aPosition, res);
 
 		AddChild(res);
 
