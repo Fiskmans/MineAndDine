@@ -1,4 +1,5 @@
 using Godot;
+using MineAndDine;
 using System;
 using System.Collections.Generic;
 using static Godot.TextServer;
@@ -21,7 +22,8 @@ public partial class Chunk : Node3D
 
     public const float SurfaceValue = 0.5f;
 
-    public struct Voxel
+    //I know they're not technically voxels :s
+    public class Voxel
 	{
 		public float Density;
 	}
@@ -83,6 +85,29 @@ public partial class Chunk : Node3D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
+    }
+
+    public Vector3I VoxelPosFromWorldPos(Vector3 aPos)
+    {
+        return (Vector3I)((aPos - Position) / Size * Resolution);
+    }
+
+    public Vector3 WorldPosFromVoxelPos(Vector3I aVoxelPos)
+    {
+        return (Vector3)aVoxelPos * Size / Resolution + Position;
+    }
+
+
+    public IEnumerable<(Vector3, Voxel)> AffectedVoxels(Aabb aArea)
+    {
+        Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(Size, Size, Size)));
+
+        foreach (Vector3I vPos in Utils.Every(
+            VoxelPosFromWorldPos(affected.Position),
+            VoxelPosFromWorldPos(affected.End) - new Vector3I(1, 1, 1)))
+        {
+            yield return (WorldPosFromVoxelPos(vPos), myVoxels[vPos.X, vPos.Y, vPos.Z]); 
+        }
     }
 
     Voxel VoxelAt(Vector3I aPos)

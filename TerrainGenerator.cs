@@ -1,7 +1,9 @@
 using Godot;
+using MineAndDine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static Godot.TabContainer;
 
 
 public partial class TerrainGenerator : Node3D
@@ -95,18 +97,28 @@ public partial class TerrainGenerator : Node3D
 		return c;
     }
 
-	public void Touch(Vector3I aFrom, Vector3I aTo)
-	{
-		for (int x = aFrom.X; x <= aTo.X; x++)
-		{
-            for (int y = aFrom.Y; y <= aTo.Y; y++)
-            {
-                for (int z = aFrom.Z; z <= aTo.Z; z++)
-                {
-					Touch(new Vector3I(x, y, z));
-                }
-            }
+	public IEnumerable<Chunk> AffectedChunks(Aabb aArea)
+    {
+		foreach(Vector3I pos in Utils.Every(ChunkPosFromWorldPos(aArea.Position) - new Vector3I(1, 1, 1), ChunkPosFromWorldPos(aArea.End)))
+        {
+            Chunk res;
+
+            if (myLoadedChunks.TryGetValue(pos, out res))
+                yield return res;
         }
+    }
+
+    public void Touch(Aabb aArea)
+    {
+        Touch(Utils.Every(ChunkPosFromWorldPos(aArea.Position) - new Vector3I(1, 1, 1), ChunkPosFromWorldPos(aArea.End)));
+    }
+
+    public void Touch(IEnumerable<Vector3I> aChunkPositions)
+	{
+		foreach (Vector3I pos in aChunkPositions)
+		{
+			Touch(pos);
+		}
     }
 
 	public void Touch(Vector3I aChunkPos)

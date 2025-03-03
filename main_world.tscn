@@ -47,6 +47,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.04997, 0)
 script = ExtResource("2_m5ruq")
 gravity = 8.0
 Reach = 100.0
+MiningPower = 0.1
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
@@ -91,7 +92,7 @@ transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 
 [node name="Terrain" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
 script = ExtResource("3_wcmku")
-ChunkSize = 5.0
+ChunkSize = 7.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.684946, 0)

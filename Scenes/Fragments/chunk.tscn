@@ -14,13 +14,14 @@ material = SubResource("ShaderMaterial_bo4vu")
 
 [node name="Chunk" type="Node3D"]
 script = ExtResource("1_0u3yb")
-Resolution = 8
+Resolution = 7
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_2dxxd")
 
 [node name="Collision" type="StaticBody3D" parent="."]
 collision_layer = 3
+collision_mask = 0
 
 [node name="CollisionMesh" type="CollisionShape3D" parent="Collision"]
 shape = SubResource("ConcavePolygonShape3D_ce0ax")

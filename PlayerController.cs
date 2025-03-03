@@ -1,6 +1,9 @@
 using Godot;
 using Godot.Collections;
+using MineAndDine;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using static Godot.TextServer;
 
 public partial class PlayerController : CharacterBody3D
@@ -12,6 +15,12 @@ public partial class PlayerController : CharacterBody3D
 
 	[Export]
 	public float Reach { get; set; } = 16;
+
+	[Export]
+	public float MiningRadius { get; set; } = 5;
+
+	[Export]
+	public float MiningPower { get; set; } = 1;
 	
 	[Export(PropertyHint.Range, "0.f,1.f,0.01f")]
 	float cameraSensitivity = 0.01f;
@@ -36,9 +45,7 @@ public partial class PlayerController : CharacterBody3D
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		Vector3I center = terrainGenerator.ChunkPosFromWorldPos(Position);
-
-		terrainGenerator.Touch(center - new Vector3I(2, 1, 2), center + new Vector3I(2,1,2));
+		terrainGenerator.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20,20,20)));
     }
 
 	public override void _PhysicsProcess(double delta)
@@ -141,8 +148,6 @@ public partial class PlayerController : CharacterBody3D
 
 	private void Interact()
 	{
-		GD.Print("Interact");
-
 		Vector2 mousePos = GetViewport().GetMousePosition();
 
 		Vector3 origin = camera.ProjectRayOrigin(mousePos);
@@ -158,15 +163,26 @@ public partial class PlayerController : CharacterBody3D
 		if (intersect.Count == 0) // Empty dictionary means no collision
 			return;
 
-        GD.Print("Intersect");
-
         Vector3 pos = ((Vector3)intersect["position"]);
 
-		Node3D dig = new Node3D { Position = pos };
-		MeshInstance3D visual = new MeshInstance3D { Mesh = new SphereMesh { Radius = 0.6f, Height = 0.3f } };
+		Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
 
-		dig.AddChild(visual);
-		GetParent().AddChild(dig);
+		terrainGenerator.Touch(area);
+
+		foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
+		{
+			foreach (var (voxelPosition, voxel) in chunk.AffectedVoxels(area))
+			{
+				float dist = pos.DistanceTo(voxelPosition);
+
+				if (dist >= MiningRadius)
+					continue;
+
+				voxel.Density -= MiningPower * (1.0f - dist / MiningRadius);
+			}
+
+			terrainGenerator.RegisterModification(chunk);
+		}
 	}
 
 	private void HandleCollision()
