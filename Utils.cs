@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,6 +21,14 @@ namespace MineAndDine
                     }
                 }
             }
+        }
+
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float weight)
+        {
+            return new Vector3(
+                    Mathf.Lerp(a.X,b.X,weight),
+                    Mathf.Lerp(a.Y,b.Y, weight),
+                    Mathf.Lerp(a.Z,b.Z,weight));
         }
     }
 }

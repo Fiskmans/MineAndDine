@@ -177,8 +177,9 @@ public partial class PlayerController : CharacterBody3D
 
 				if (dist >= MiningRadius)
 					continue;
+				float amount = Mathf.Min(MiningPower * (1.0f - dist / MiningRadius), voxel.Dirt);
 
-				voxel.Density -= MiningPower * (1.0f - dist / MiningRadius);
+				voxel.Dirt -= amount;
 			}
 
 			terrainGenerator.RegisterModification(chunk);

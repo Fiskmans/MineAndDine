@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://dxfbdlpqbpxii"]
 
 [ext_resource type="Script" uid="uid://ccqwslplqdnc3" path="res://Chunk.cs" id="1_0u3yb"]
-[ext_resource type="Shader" uid="uid://b6bw6noigym5w" path="res://Shaders/Angle.gdshader" id="2_i3xxu"]
+[ext_resource type="Shader" uid="uid://b6bw6noigym5w" path="res://Shaders/Ground.gdshader" id="2_i3xxu"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bo4vu"]
 render_priority = 0
