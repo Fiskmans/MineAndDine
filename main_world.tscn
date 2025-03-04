@@ -1,8 +1,8 @@
 [gd_scene load_steps=17 format=3 uid="uid://mwujfi7brask"]
 
-[ext_resource type="Script" path="res://PlayerController.cs" id="2_m5ruq"]
+[ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="2_m5ruq"]
 [ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="2_qoadf"]
-[ext_resource type="Script" path="res://TerrainGenerator.cs" id="3_wcmku"]
+[ext_resource type="Script" uid="uid://dpw2piduv22rk" path="res://TerrainGenerator.cs" id="3_wcmku"]
 [ext_resource type="Texture2D" uid="uid://bm7cuj8d1s41c" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Brick_BaseColor.png" id="5_lv4yp"]
 [ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
 
