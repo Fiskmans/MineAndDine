@@ -40,6 +40,7 @@ public partial class PlayerController : CharacterBody3D
 		terrainGenerator = GetParent().GetNode<TerrainGenerator>("Terrain");
 
 		Input.MouseMode = Input.MouseModeEnum.Captured;
+
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -49,67 +50,81 @@ public partial class PlayerController : CharacterBody3D
     }
 
 	public override void _PhysicsProcess(double delta)
-	{
-		var direction = Vector3.Zero;
-		
-		Vector3 camRot = camera.GetGlobalRotation();
-		
-		Vector3 forward = new Vector3(-(float)Mathf.Sin(camRot.Y), 0, -(float)Mathf.Cos(camRot.Y));
-		Vector3 right = new Vector3(-(float)Mathf.Sin(camRot.Y - (Math.PI * 0.5f)), 0, -(float)Mathf.Cos(camRot.Y - (Math.PI * 0.5f)));
-
-		if (Input.IsActionPressed("move_right"))
-		{
-			direction += right;
-		}
-		if (Input.IsActionPressed("move_left"))
-		{
-			direction -= right;
-		}
-		if (Input.IsActionPressed("move_back"))
-		{
-			direction -= forward;
-		}
-		if (Input.IsActionPressed("move_forward"))
-		{
-			direction += forward;
-		}
-
-		if (direction != Vector3.Zero)
-		{
-			direction = direction.Normalized();
-			// Setting the basis property will affect the rotation of the node.
-			GetNode<Node3D>("meshPivot").Basis = Basis.LookingAt(direction);
-		}
-
-		targetVelocity.X = direction.X * speed;
-		targetVelocity.Z = direction.Z * speed;
-
-		if (IsOnFloor())
-		{
-			if (targetVelocity.Y < 0.1f)
-			{
-				targetVelocity.Y = 0;
-			}
-			if (Input.IsActionPressed("jump"))
-			{
-				targetVelocity.Y = 5;
-			}
-		}
-		else
-		{
-			targetVelocity.Y -= gravity * (float)delta;
-		}
-
-		Velocity = targetVelocity;
-
-		if (MoveAndSlide())
-			HandleCollision();
-
+    {
         if (Input.IsActionJustPressed("main_interact"))
             Interact();
+
+        if (Input.IsActionJustPressed("secondary_interact"))
+            SecondaryInteract();
+
+        Vector3 direction = HandleMovementInput();
+        ApplyMovement(delta, direction);
     }
-	
-	public override void _UnhandledInput(InputEvent @event) //0 clue what the @ means ¯\_(ツ)_/¯  TODO: make proper input events
+
+    private void ApplyMovement(double delta, Vector3 direction)
+    {
+        targetVelocity.X = direction.X * speed;
+        targetVelocity.Z = direction.Z * speed;
+
+        if (IsOnFloor())
+        {
+            if (targetVelocity.Y < 0.1f)
+            {
+                targetVelocity.Y = 0;
+            }
+            if (Input.IsActionPressed("jump"))
+            {
+                targetVelocity.Y = 5;
+            }
+        }
+        else
+        {
+            targetVelocity.Y -= gravity * (float)delta;
+        }
+
+        Velocity = targetVelocity;
+
+        if (MoveAndSlide())
+            HandleCollision();
+    }
+
+    private Vector3 HandleMovementInput()
+    {
+        var direction = Vector3.Zero;
+
+        Vector3 camRot = camera.GetGlobalRotation();
+
+        Vector3 forward = new Vector3(-(float)Mathf.Sin(camRot.Y), 0, -(float)Mathf.Cos(camRot.Y));
+        Vector3 right = new Vector3(-(float)Mathf.Sin(camRot.Y - (Math.PI * 0.5f)), 0, -(float)Mathf.Cos(camRot.Y - (Math.PI * 0.5f)));
+
+        if (Input.IsActionPressed("move_right"))
+        {
+            direction += right;
+        }
+        if (Input.IsActionPressed("move_left"))
+        {
+            direction -= right;
+        }
+        if (Input.IsActionPressed("move_back"))
+        {
+            direction -= forward;
+        }
+        if (Input.IsActionPressed("move_forward"))
+        {
+            direction += forward;
+        }
+
+        if (direction != Vector3.Zero)
+        {
+            direction = direction.Normalized();
+            // Setting the basis property will affect the rotation of the node.
+            GetNode<Node3D>("meshPivot").Basis = Basis.LookingAt(direction);
+        }
+
+        return direction;
+    }
+
+    public override void _UnhandledInput(InputEvent @event) //0 clue what the @ means ¯\_(ツ)_/¯  TODO: make proper input events
 	{
 		if (@event is InputEventKey keyEvent)
 		{
@@ -147,46 +162,80 @@ public partial class PlayerController : CharacterBody3D
 	}
 
 	private void Interact()
+    {
+        Dictionary intersect = RaycastMouse();
+
+        if (intersect.Count == 0) // Empty dictionary means no collision
+            return;
+
+        Vector3 pos = (Vector3)intersect["position"];
+
+        Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
+
+        terrainGenerator.Touch(area);
+
+        foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
+        {
+            foreach ((Vector3I voxelPosition, Chunk.Voxel voxel) in chunk.AffectedVoxels(area))
+            {
+                float dist = pos.DistanceTo(chunk.WorldPosFromVoxelPos(voxelPosition));
+
+                if (dist >= MiningRadius)
+                    continue;
+                float amount = Mathf.Min(MiningPower * (1.0f - dist / MiningRadius), voxel.Dirt);
+
+                voxel.Dirt -= amount;
+            }
+
+            chunk.Update();
+            terrainGenerator.RegisterModification(chunk);
+        }
+    }
+
+    private void SecondaryInteract()
 	{
-		Vector2 mousePos = GetViewport().GetMousePosition();
+        Dictionary intersect = RaycastMouse();
 
-		Vector3 origin = camera.ProjectRayOrigin(mousePos);
+        if (intersect.Count == 0) // Empty dictionary means no collision
+            return;
 
-		PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
+        Vector3 pos = (Vector3)intersect["position"];
 
-		rayParams.From = origin;
-		rayParams.To = origin + camera.ProjectRayNormal(mousePos) * Reach;
-		rayParams.CollisionMask = 2;
+        Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
 
-		Dictionary intersect = GetWorld3D().DirectSpaceState.IntersectRay(rayParams);
+        terrainGenerator.Touch(area);
 
-		if (intersect.Count == 0) // Empty dictionary means no collision
-			return;
+        foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
+        {
+            foreach ((Vector3I voxelPosition, Chunk.Voxel voxel) in chunk.AffectedVoxels(area))
+            {
+                Chunk.Voxel below = chunk.VoxelAt(voxelPosition + Vector3I.Down);
+                voxel.CompressInto(below, Chunk.FullValue);
+            }
 
-        Vector3 pos = ((Vector3)intersect["position"]);
+            chunk.Update();
+            terrainGenerator.RegisterModification(chunk);
+        }
+    }
 
-		Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
+    private Dictionary RaycastMouse()
+    {
+        Vector2 mousePos = GetViewport().GetMousePosition();
 
-		terrainGenerator.Touch(area);
+        Vector3 origin = camera.ProjectRayOrigin(mousePos);
 
-		foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
-		{
-			foreach (var (voxelPosition, voxel) in chunk.AffectedVoxels(area))
-			{
-				float dist = pos.DistanceTo(voxelPosition);
+        PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
 
-				if (dist >= MiningRadius)
-					continue;
-				float amount = Mathf.Min(MiningPower * (1.0f - dist / MiningRadius), voxel.Dirt);
+        rayParams.From = origin;
+        rayParams.To = origin + camera.ProjectRayNormal(mousePos) * Reach;
+        rayParams.CollisionMask = 2;
 
-				voxel.Dirt -= amount;
-			}
+        Dictionary intersect = GetWorld3D().DirectSpaceState.IntersectRay(rayParams);
+        return intersect;
+    }
 
-			terrainGenerator.RegisterModification(chunk);
-		}
-	}
 
-	private void HandleCollision()
+    private void HandleCollision()
 	{
 	}
 }

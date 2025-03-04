@@ -7,7 +7,7 @@ uniform vec3 LightColor;
 uniform vec3 DarkColor;
 
 varying vec3 UV3;
-varying float Darkness;
+varying vec3 MaterialBaseColor;
 
 vec2 random(vec2 uv)
 {
@@ -21,9 +21,9 @@ float perlinNoise(vec3 uv)
 {
     vec2 uv_index = floor(uv).xz;
     vec2 uv_fract = fract(uv).xz;
-	
+
     vec2 blur = smoothstep(0.0, 1.0, uv_fract);
-	
+
     return mix( mix( dot( random(uv_index + vec2(0.0,0.0)), uv_fract - vec2(0.0,0.0)),
                      dot( random(uv_index + vec2(1.0,0.0)), uv_fract - vec2(1.0,0.0)), blur.x),
                 mix( dot( random(uv_index + vec2(0.0,1.0)), uv_fract - vec2(0.0,1.0)),
@@ -34,15 +34,16 @@ void vertex() {
 	UV3 = VERTEX / Size + vec3(Offset);
 	VERTEX = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	// Called for every vertex the material is visible on.
-	Darkness = CUSTOM0.r;
+	MaterialBaseColor = CUSTOM0.rgb;
 }
 
 void fragment() {
 	float light = dot(NORMAL, normalize(vec3(1, 3, 1)));
 	float noise = perlinNoise(UV3 * 4.0);
-	ALBEDO = mix(DarkColor, LightColor, mix(noise, light, 0.6));
+	ALBEDO = MaterialBaseColor;
+	vec3 shade = mix(DarkColor, LightColor, mix(noise, light, 0.6));
+	ALBEDO = mix(ALBEDO, shade, 0.3);
 
-	ALBEDO *= Darkness;
 }
 
 //void light() {

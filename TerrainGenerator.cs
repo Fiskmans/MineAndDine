@@ -20,7 +20,6 @@ public partial class TerrainGenerator : Node3D
 
 	public event ChunkedChangeHandler OnChunkChange;
 
-    HashSet<Chunk> _myModifiedChunks = new HashSet<Chunk>();
     HashSet<Chunk> myModifiedChunks = new HashSet<Chunk>();
     HashSet<Chunk> myChunksToRemesh = new HashSet<Chunk>();
 
@@ -31,29 +30,25 @@ public partial class TerrainGenerator : Node3D
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
-	{
-		// swap buffers so we don't end up in infinite loops
-		(_myModifiedChunks, myModifiedChunks) = (myModifiedChunks, _myModifiedChunks);
+    {
+		HashSet<Chunk> chunks = new HashSet<Chunk>(myModifiedChunks);
+        myModifiedChunks.Clear();
 
-		foreach (Chunk chunk in myChunksToRemesh)
+        foreach (Chunk c in chunks)
 		{
+			c.Update();
+			OnChunkChange?.Invoke(c);
+        }
+
+        foreach (Chunk chunk in myChunksToRemesh)
+        {
             chunk.RegenerateMesh();
-		}
+        }
 
-		myChunksToRemesh.Clear();
+        myChunksToRemesh.Clear();
+    }
 
-		if (OnChunkChange != null)
-		{
-			foreach (Chunk c in _myModifiedChunks)
-			{
-				OnChunkChange.Invoke(c);
-			}
-		}
-
-        _myModifiedChunks.Clear();
-	}
-
-	public void RegisterModification(Chunk aChunk)
+    public void RegisterModification(Chunk aChunk)
 	{
 		myModifiedChunks.Add(aChunk);
 

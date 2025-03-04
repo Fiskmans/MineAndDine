@@ -47,7 +47,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.71237, 0)
 script = ExtResource("2_m5ruq")
 gravity = 8.0
 Reach = 100.0
-MiningPower = 0.1
+MiningPower = 0.8
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
@@ -109,6 +109,7 @@ skeleton = NodePath("../floor")
 
 [node name="floor" type="MeshInstance3D" parent="WorldEnvironment"]
 transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0)
+visible = false
 material_override = SubResource("StandardMaterial3D_8ac4f")
 mesh = SubResource("PlaneMesh_07y88")
 surface_material_override/0 = SubResource("StandardMaterial3D_bu80i")
