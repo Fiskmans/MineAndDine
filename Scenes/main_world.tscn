@@ -48,6 +48,8 @@ script = ExtResource("2_m5ruq")
 gravity = 8.0
 Reach = 100.0
 MiningPower = 0.1
+sprintMultiplier = 3.0
+cameraSensitivity = 0.005
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 

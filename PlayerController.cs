@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using static Godot.TextServer;
 
+
 public partial class PlayerController : CharacterBody3D
 {
 	[Export]
@@ -15,6 +16,9 @@ public partial class PlayerController : CharacterBody3D
 
 	[Export]
 	public float Reach { get; set; } = 16;
+
+	[Export]
+	public float sprintMultiplier { get; set; } = 1.5f;
 
 	[Export]
 	public float MiningRadius { get; set; } = 5;
@@ -32,12 +36,14 @@ public partial class PlayerController : CharacterBody3D
 	private Node3D cameraPivot;
 	private TerrainGenerator terrainGenerator;
 
-	public override void _Ready()
+	private bool sprinting = false;
+
 	// Called when the node enters the scene tree for the first time.
+	public override void _Ready()
 	{
-		cameraPivot = GetNode<Node3D>("cameraPivot");
+		cameraPivot = GetNode<Node3D>("cameraPivot"); //Spawn this stuff instead?
 		camera = GetNode<Camera3D>("cameraPivot/cameraArm/playerCamera");
-		terrainGenerator = GetParent().GetNode<TerrainGenerator>("Terrain");
+		terrainGenerator = GetParent().GetNode<TerrainGenerator>("Terrain"); 
 
 		Input.MouseMode = Input.MouseModeEnum.Captured;
 	}
@@ -46,7 +52,7 @@ public partial class PlayerController : CharacterBody3D
 	public override void _Process(double delta)
 	{
 		terrainGenerator.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20,20,20)));
-    }
+	}
 
 	public override void _PhysicsProcess(double delta)
 	{
@@ -74,6 +80,11 @@ public partial class PlayerController : CharacterBody3D
 			direction += forward;
 		}
 
+		if(Input.IsActionJustPressed("sprint"))
+		{
+			sprinting = !sprinting;
+		}
+
 		if (direction != Vector3.Zero)
 		{
 			direction = direction.Normalized();
@@ -81,8 +92,13 @@ public partial class PlayerController : CharacterBody3D
 			GetNode<Node3D>("meshPivot").Basis = Basis.LookingAt(direction);
 		}
 
-		targetVelocity.X = direction.X * speed;
-		targetVelocity.Z = direction.Z * speed;
+		if(direction.Dot(forward) < 0.2f)
+		{
+			sprinting = false;
+		}
+
+		targetVelocity.X = direction.X * speed * (sprinting ? sprintMultiplier : 1);
+		targetVelocity.Z = direction.Z * speed * (sprinting ? sprintMultiplier : 1);
 
 		if (IsOnFloor())
 		{
@@ -105,17 +121,17 @@ public partial class PlayerController : CharacterBody3D
 		if (MoveAndSlide())
 			HandleCollision();
 
-        if (Input.IsActionJustPressed("main_interact"))
-            Interact();
-    }
+		if (Input.IsActionJustPressed("main_interact"))
+			Interact();
+	}
 	
-	public override void _UnhandledInput(InputEvent @event) //0 clue what the @ means ¯\_(ツ)_/¯  TODO: make proper input events
+	public override void _UnhandledInput(InputEvent evnt) //Is there no other way to capture mouse movement????
 	{
-		if (@event is InputEventKey keyEvent)
+		if (evnt is InputEventKey keyEvent)
 		{
-			if (keyEvent.Pressed && keyEvent.Keycode == Key.Escape)
+			if (keyEvent.Pressed && keyEvent.Keycode == Key.Escape && OS.HasFeature("editor"))
 			{
-				GetTree().Quit();
+				GetTree().Quit(); 
 			}
 
 			if (keyEvent.Keycode == Key.Alt)
@@ -133,7 +149,7 @@ public partial class PlayerController : CharacterBody3D
 
 		if (Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
-			if (@event is InputEventMouseMotion mouseEvent)
+			if (evnt is InputEventMouseMotion mouseEvent)
 			{
 				Vector3 cameraRot = cameraPivot.GetRotation();
 			
@@ -163,7 +179,7 @@ public partial class PlayerController : CharacterBody3D
 		if (intersect.Count == 0) // Empty dictionary means no collision
 			return;
 
-        Vector3 pos = ((Vector3)intersect["position"]);
+		Vector3 pos = ((Vector3)intersect["position"]);
 
 		Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
 
