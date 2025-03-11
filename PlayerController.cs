@@ -4,205 +4,260 @@ using MineAndDine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using static Godot.TextServer;
+using static MineAndDine.PickupObject;
 
 
 public partial class PlayerController : CharacterBody3D
 {
-	[Export]
-	public int speed { get; set; } = 14;
-	[Export]
-	public float gravity { get; set; } = 16;
+    [Export]
+    public int mySpeed { get; set; } = 14;
+    [Export]
+    public float mySprintMultiplier { get; set; } = 1.5f;
+    [Export]
+    public float myGravity { get; set; } = 16;
 
-	[Export]
-	public float Reach { get; set; } = 16;
+    [Export]
+    public float myReach { get; set; } = 16;
+    [Export]
+    public float myMiningRadius { get; set; } = 5;
+    [Export]
+    public float myMiningPower { get; set; } = 1;
 
-	[Export]
-	public float sprintMultiplier { get; set; } = 1.5f;
+    [Export(PropertyHint.Range, "0.f,1.f,0.01f")]
+    float myCameraSensitivity = 0.01f;
+    [Export(PropertyHint.Range, "0.f,360.f,1.f,radians_as_degrees")]
+    float myCameraTiltLimit = Mathf.DegToRad(75);
 
-	[Export]
-	public float MiningRadius { get; set; } = 5;
+    private Camera3D myCamera;
+    private Node3D myCameraPivot;
+    private TerrainGenerator myTerrainGenerator;
+    public Node3D myHand { get; private set; }
 
-	[Export]
-	public float MiningPower { get; set; } = 1;
-	
-	[Export(PropertyHint.Range, "0.f,1.f,0.01f")]
-	float cameraSensitivity = 0.01f;
-	[Export(PropertyHint.Range, "0.f,360.f,1.f,radians_as_degrees")]
-	float cameraTiltLimit = Mathf.DegToRad(75);
-	
-	private Vector3 targetVelocity = Vector3.Zero;
-	private Camera3D camera;
-	private Node3D cameraPivot;
-	private TerrainGenerator terrainGenerator;
+    private Vector3 myTargetVelocity = Vector3.Zero;
+    private bool myIsSprinting = false;
 
-	private bool sprinting = false;
+    private PickupObject myHeldObject;
 
-	// Called when the node enters the scene tree for the first time.
-	public override void _Ready()
-	{
-		cameraPivot = GetNode<Node3D>("cameraPivot"); //Spawn this stuff instead?
-		camera = GetNode<Camera3D>("cameraPivot/cameraArm/playerCamera");
-		terrainGenerator = GetParent().GetNode<TerrainGenerator>("Terrain"); 
+    // Called when the node enters the scene tree for the first time.
+    public override void _Ready()
+    {
+        myCameraPivot = GetNode<Node3D>("cameraPivot"); //Spawn this stuff instead?
+        myCamera = GetNode<Camera3D>("cameraPivot/cameraArm/playerCamera");
+        myTerrainGenerator = GetParent().GetNode<TerrainGenerator>("Terrain");
 
-		Input.MouseMode = Input.MouseModeEnum.Captured;
-	}
+        myHand = GetNode<Node3D>("meshPivot/hand");
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
-		terrainGenerator.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20,20,20)));
-	}
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+    }
 
-	public override void _PhysicsProcess(double delta)
-	{
-		var direction = Vector3.Zero;
-		
-		Vector3 camRot = camera.GetGlobalRotation();
-		
-		Vector3 forward = new Vector3(-(float)Mathf.Sin(camRot.Y), 0, -(float)Mathf.Cos(camRot.Y));
-		Vector3 right = new Vector3(-(float)Mathf.Sin(camRot.Y - (Math.PI * 0.5f)), 0, -(float)Mathf.Cos(camRot.Y - (Math.PI * 0.5f)));
+    // Called every frame. 'delta' is the elapsed time since the previous frame.
+    public override void _Process(double delta)
+    {
+        myTerrainGenerator.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20, 20, 20)));
+    }
 
-		if (Input.IsActionPressed("move_right"))
-		{
-			direction += right;
-		}
-		if (Input.IsActionPressed("move_left"))
-		{
-			direction -= right;
-		}
-		if (Input.IsActionPressed("move_back"))
-		{
-			direction -= forward;
-		}
-		if (Input.IsActionPressed("move_forward"))
-		{
-			direction += forward;
-		}
+    public override void _PhysicsProcess(double delta)
+    {
+        Vector3 direction = Vector3.Zero;
 
-		if(Input.IsActionJustPressed("sprint"))
-		{
-			sprinting = !sprinting;
-		}
+        Vector3 camRot = myCamera.GetGlobalRotation();
 
-		if (direction != Vector3.Zero)
-		{
-			direction = direction.Normalized();
-			// Setting the basis property will affect the rotation of the node.
-			GetNode<Node3D>("meshPivot").Basis = Basis.LookingAt(direction);
-		}
+        Vector3 forward = new Vector3(-(float)Mathf.Sin(camRot.Y), 0, -(float)Mathf.Cos(camRot.Y));
+        Vector3 right = new Vector3(-(float)Mathf.Sin(camRot.Y - (Math.PI * 0.5f)), 0, -(float)Mathf.Cos(camRot.Y - (Math.PI * 0.5f)));
 
-		if(direction.Dot(forward) < 0.2f)
-		{
-			sprinting = false;
-		}
+        if (Input.IsActionPressed("move_right"))
+        {
+            direction += right;
+        }
+        if (Input.IsActionPressed("move_left"))
+        {
+            direction -= right;
+        }
+        if (Input.IsActionPressed("move_back"))
+        {
+            direction -= forward;
+        }
+        if (Input.IsActionPressed("move_forward"))
+        {
+            direction += forward;
+        }
 
-		targetVelocity.X = direction.X * speed * (sprinting ? sprintMultiplier : 1);
-		targetVelocity.Z = direction.Z * speed * (sprinting ? sprintMultiplier : 1);
+        if (Input.IsActionJustPressed("sprint"))
+        {
+            myIsSprinting = !myIsSprinting;
+        }
 
-		if (IsOnFloor())
-		{
-			if (targetVelocity.Y < 0.1f)
-			{
-				targetVelocity.Y = 0;
-			}
-			if (Input.IsActionPressed("jump"))
-			{
-				targetVelocity.Y = 5;
-			}
-		}
-		else
-		{
-			targetVelocity.Y -= gravity * (float)delta;
-		}
+        if (Input.IsActionJustPressed("main_interact"))
+        {
+            Interact();
+        }
 
-		Velocity = targetVelocity;
+        if (direction != Vector3.Zero)
+        {
+            direction = direction.Normalized();
 
-		if (MoveAndSlide())
-			HandleCollision();
+            // Setting the basis property will affect the rotation of the node.
+            GetNode<Node3D>("meshPivot").Basis = Basis.LookingAt(direction);
+        }
 
-		if (Input.IsActionJustPressed("main_interact"))
-			Interact();
-	}
-	
-	public override void _UnhandledInput(InputEvent evnt) //Is there no other way to capture mouse movement????
-	{
-		if (evnt is InputEventKey keyEvent)
-		{
-			if (keyEvent.Pressed && keyEvent.Keycode == Key.Escape && OS.HasFeature("editor"))
-			{
-				GetTree().Quit(); 
-			}
+        if (direction.Dot(forward) < 0.2f)
+        {
+            myIsSprinting = false;
+        }
 
-			if (keyEvent.Keycode == Key.Alt)
-			{
-				if (keyEvent.IsPressed())
-				{
-					Input.MouseMode = Input.MouseModeEnum.Visible;
-				}
-				else
-				{
-					Input.MouseMode = Input.MouseModeEnum.Captured;
-				}
-			}
-		}
+        myTargetVelocity.X = direction.X * mySpeed * (myIsSprinting ? mySprintMultiplier : 1);
+        myTargetVelocity.Z = direction.Z * mySpeed * (myIsSprinting ? mySprintMultiplier : 1);
 
-		if (Input.MouseMode == Input.MouseModeEnum.Captured)
-		{
-			if (evnt is InputEventMouseMotion mouseEvent)
-			{
-				Vector3 cameraRot = cameraPivot.GetRotation();
-			
-				cameraRot.X -= mouseEvent.GetRelative().Y * cameraSensitivity;
-				cameraRot.X = Mathf.Clamp(cameraRot.X, -cameraTiltLimit, cameraTiltLimit);
-				cameraRot.Y -= mouseEvent.GetRelative().X * cameraSensitivity;
-			
-				cameraPivot.SetRotation(cameraRot);
-			}
-		}
-	}
+        if (IsOnFloor())
+        {
+            if (myTargetVelocity.Y < 0.1f)
+            {
+                myTargetVelocity.Y = 0;
+            }
+            if (Input.IsActionPressed("jump"))
+            {
+                myTargetVelocity.Y = 5;
+            }
+        }
+        else
+        {
+            myTargetVelocity.Y -= myGravity * (float)delta;
+        }
 
-	private void Interact()
-	{
-		Vector2 mousePos = GetViewport().GetMousePosition();
+        Velocity = myTargetVelocity;
 
-		Vector3 origin = camera.ProjectRayOrigin(mousePos);
+        if (MoveAndSlide())
+        {
+            HandleCollision();
+        }
+    }
 
-		PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
+    public override void _UnhandledInput(InputEvent anEvent) //Is there no other way to capture mouse movement????
+    {
+        if (anEvent is InputEventKey keyEvent)
+        {
+            if (keyEvent.Pressed && keyEvent.Keycode == Key.Escape && OS.HasFeature("editor"))
+            {
+                GetTree().Quit();
+            }
 
-		rayParams.From = origin;
-		rayParams.To = origin + camera.ProjectRayNormal(mousePos) * Reach;
-		rayParams.CollisionMask = 2;
+            if (keyEvent.Keycode == Key.Alt)
+            {
+                if (keyEvent.IsPressed())
+                {
+                    Input.MouseMode = Input.MouseModeEnum.Visible;
+                }
+                else
+                {
+                    Input.MouseMode = Input.MouseModeEnum.Captured;
+                }
+            }
+        }
 
-		Dictionary intersect = GetWorld3D().DirectSpaceState.IntersectRay(rayParams);
+        if (Input.MouseMode == Input.MouseModeEnum.Captured)
+        {
+            if (anEvent is InputEventMouseMotion mouseEvent)
+            {
+                Vector3 cameraRot = myCameraPivot.GetRotation();
 
-		if (intersect.Count == 0) // Empty dictionary means no collision
-			return;
+                cameraRot.X -= mouseEvent.GetRelative().Y * myCameraSensitivity;
+                cameraRot.X = Mathf.Clamp(cameraRot.X, -myCameraTiltLimit, myCameraTiltLimit);
+                cameraRot.Y -= mouseEvent.GetRelative().X * myCameraSensitivity;
 
-		Vector3 pos = ((Vector3)intersect["position"]);
+                myCameraPivot.SetRotation(cameraRot);
+            }
+        }
+    }
 
-		Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
+    private void Interact()
+    {
+        if (myHeldObject != null)
+        {
+            DropHeldObject();
+            return;
+        }
 
-		terrainGenerator.Touch(area);
+        Vector2 mousePos = GetViewport().GetMousePosition();
 
-		foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
-		{
-			foreach (var (voxelPosition, voxel) in chunk.AffectedVoxels(area))
-			{
-				float dist = pos.DistanceTo(voxelPosition);
+        Vector3 origin = myCamera.ProjectRayOrigin(mousePos);
 
-				if (dist >= MiningRadius)
-					continue;
-				float amount = Mathf.Min(MiningPower * (1.0f - dist / MiningRadius), voxel.Dirt);
+        PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
 
-				voxel.Dirt -= amount;
-			}
+        rayParams.From = origin;
+        rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
+        //rayParams.CollisionMask = 2; Sorry fixar snart :)
 
-			terrainGenerator.RegisterModification(chunk);
-		}
-	}
+        Dictionary intersection = GetWorld3D().DirectSpaceState.IntersectRay(rayParams); //https://github.com/godotengine/godot-docs-user-notes/discussions/100#discussioncomment-10655180 Probs won't matter tho
 
-	private void HandleCollision()
-	{
-	}
+        if (intersection.Count == 0) // Empty dictionary means no collision
+        {
+            return;
+        }
+
+        if (intersection["collider"].Obj is PickupObject)
+        {
+            PickUpObj(intersection);
+        }
+        else
+        {
+            Mine(intersection);
+        }
+
+    }
+
+    private void Mine(Dictionary anIntersection)
+    {
+        Vector3 pos = ((Vector3)anIntersection["position"]);
+
+        Aabb area = new Aabb(pos - new Vector3(myMiningRadius, myMiningRadius, myMiningRadius), new Vector3(myMiningRadius, myMiningRadius, myMiningRadius) * 2);
+
+        myTerrainGenerator.Touch(area);
+
+        float dist;
+
+        foreach (Chunk chunk in myTerrainGenerator.AffectedChunks(area))
+        {
+            foreach (var (voxelPosition, voxel) in chunk.AffectedVoxels(area))
+            {
+                dist = pos.DistanceTo(voxelPosition);
+
+                if (dist >= myMiningRadius)
+                {
+                    continue;
+                }
+
+                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), voxel.Dirt);
+
+                voxel.Dirt -= amount;
+            }
+
+            myTerrainGenerator.RegisterModification(chunk);
+        }
+    }
+
+    private void PickUpObj(Dictionary anIntersection)
+    {
+        PickupObject objToPickUp = (PickupObject)anIntersection["collider"].Obj;
+
+        objToPickUp.PickUp(this);
+
+        myHeldObject = objToPickUp;
+    }
+
+    private void DropHeldObject()
+    {
+        if (myHeldObject != null)
+        {
+            myHeldObject.Drop();
+
+            myHeldObject = null;
+        }
+
+    }
+
+    private void HandleCollision()
+    {
+    }
 }

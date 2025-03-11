@@ -1,10 +1,13 @@
-[gd_scene load_steps=17 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=19 format=3 uid="uid://mwujfi7brask"]
 
+[ext_resource type="Texture2D" uid="uid://diwcvuml5m7fa" path="res://icon.svg" id="1_1tp12"]
 [ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="2_m5ruq"]
 [ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="2_qoadf"]
 [ext_resource type="Script" uid="uid://dpw2piduv22rk" path="res://TerrainGenerator.cs" id="3_wcmku"]
-[ext_resource type="Texture2D" uid="uid://bm7cuj8d1s41c" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Brick_BaseColor.png" id="5_lv4yp"]
 [ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
+[ext_resource type="Script" uid="uid://bor2v4duflavf" path="res://PickupObject.cs" id="5_uq1df"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_uq1df"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fq6ae"]
 
@@ -32,24 +35,19 @@ albedo_texture = ExtResource("5_ly5bc")
 
 [sub_resource type="BoxMesh" id="BoxMesh_lmc21"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ac4f"]
-albedo_texture = ExtResource("5_lv4yp")
+[sub_resource type="BoxMesh" id="BoxMesh_1tp12"]
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_07y88"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uq1df"]
+albedo_color = Color(0.513726, 0.266667, 0.521569, 1)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bu80i"]
-albedo_color = Color(0.310385, 0.508863, 9.62615e-08, 1)
+[sub_resource type="BoxShape3D" id="BoxShape3D_uq1df"]
+size = Vector3(1, 1, 1.01984)
 
 [node name="Main world" type="Node3D"]
 
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.71237, 0)
 script = ExtResource("2_m5ruq")
-gravity = 8.0
-Reach = 100.0
-MiningPower = 0.1
-sprintMultiplier = 3.0
-cameraSensitivity = 0.005
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
@@ -59,7 +57,19 @@ spring_length = 4.0
 
 [node name="playerCamera" type="Camera3D" parent="CharacterBody3D/cameraPivot/cameraArm"]
 
+[node name="corsshair" type="Sprite2D" parent="CharacterBody3D/cameraPivot/cameraArm/playerCamera"]
+position = Vector2(576, 324)
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("1_1tp12")
+
 [node name="meshPivot" type="Node3D" parent="CharacterBody3D"]
+
+[node name="hand" type="Node3D" parent="CharacterBody3D/meshPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.712084, 0.446183, -0.533757)
+
+[node name="handMesh" type="MeshInstance3D" parent="CharacterBody3D/meshPivot/hand"]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+mesh = SubResource("SphereMesh_uq1df")
 
 [node name="Prop_Vine12" parent="CharacterBody3D/meshPivot" instance=ExtResource("2_qoadf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.20619, 0)
@@ -88,9 +98,6 @@ transform = Transform3D(-0.726203, 0, -0.68748, 0, 1, 0, 0.68748, 0, -0.726203, 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
 shape = SubResource("CapsuleShape3D_fq6ae")
 
-[node name="CharacterBody3D_Pivot#MainCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.915051, 0.403338, 0, -0.403338, 0.915051, 0, 2.36464, 4.78508)
-
 [node name="Terrain" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
 script = ExtResource("3_wcmku")
@@ -104,13 +111,18 @@ shape = SubResource("BoxShape3D_v3q5b")
 environment = SubResource("Environment_6m1a7")
 
 [node name="center" type="MeshInstance3D" parent="WorldEnvironment"]
-transform = Transform3D(0.1, 0, 0, 0, 1, 0, 0, 0, 0.1, 0, 0.5, 0)
+transform = Transform3D(0.1, 0, 0, 0, 20, 0, 0, 0, 0.1, 0, 0, 0)
 material_override = SubResource("StandardMaterial3D_clnj1")
 mesh = SubResource("BoxMesh_lmc21")
-skeleton = NodePath("../floor")
+skeleton = NodePath("")
 
-[node name="floor" type="MeshInstance3D" parent="WorldEnvironment"]
-transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0)
-material_override = SubResource("StandardMaterial3D_8ac4f")
-mesh = SubResource("PlaneMesh_07y88")
-surface_material_override/0 = SubResource("StandardMaterial3D_bu80i")
+[node name="pickUp" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55107, 4.90979)
+script = ExtResource("5_uq1df")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="pickUp"]
+mesh = SubResource("BoxMesh_1tp12")
+surface_material_override/0 = SubResource("StandardMaterial3D_uq1df")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="pickUp"]
+shape = SubResource("BoxShape3D_uq1df")
