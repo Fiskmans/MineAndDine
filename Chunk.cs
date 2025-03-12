@@ -1,8 +1,10 @@
 using Godot;
 using MineAndDine;
+using MineAndDine.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Xml.Linq;
 using static Godot.TextServer;
 
 public partial class Chunk : Node3D
@@ -25,72 +27,22 @@ public partial class Chunk : Node3D
 	public const float SurfaceValue = 0.5f;
 
 	//I know they're not technically voxels :s
-	public class Voxel
+	public class Voxel : MaterialContainer
 	{
-		public const float epsilon = 0.001f;
+        public override float GetVolume() { return 1.0f; }
 
-		public float Total { get { return Dirt + Coal; } }
-
-		[VoxelMaterial(Solid = false)]
-		public float Dirt { get; set; }
-
-		[VoxelMaterial(Solid = true)]
-		public float Coal { get; set; }
-
-        public bool Solid()
-		{
-			return Total > SurfaceValue;
-		}
-
-		public bool Empty()
-		{
-			return Total < epsilon;
-		}
-
-		public bool CollapseOnto(Voxel aOther)
+        public bool Simulate(Chunk aOwner, Vector3I aSubPosition)
         {
-            if (aOther == null)
-                return false;
+			Voxel below = aOwner.VoxelAt(aSubPosition + Vector3I.Down);
 
-            float space = FullValue - aOther.Total;
+			bool modified = false;
 
-            float amount = Mathf.Min(space, Total);
-			float moved = 0;
+			if (below != null)
+				if (below.Take<LooseMaterialAttribute>(this))
+                    modified = true;
 
-
-			foreach ((PropertyInfo mat, VoxelMaterialAttribute attributes) in Utils.AllPropertiesWithAttribute<VoxelMaterialAttribute>(this))
-			{
-
-			}
-
-            if (amount < epsilon)
-                return false;
-
-            return true;
+            return modified;
         }
-
-		public bool CompressInto(Voxel aOther, float aCap)
-		{
-			if (aOther == null)
-				return false;
-
-			float space = aCap - aOther.Total;
-
-			float amount = Mathf.Min(space, Total);
-
-			if (amount < epsilon)
-				return false;
-
-			float fraction = amount / Total;
-
-			aOther.Dirt += Dirt * fraction;
-			aOther.Coal += Coal * fraction;
-
-			Dirt -= Dirt * fraction;
-			Coal -= Coal * fraction;
-
-			return true;
-		}
 	}
 
 	static Voxel NullVoxel = new Voxel { };
@@ -141,6 +93,8 @@ public partial class Chunk : Node3D
 						Dirt = amount * 0.9f,
 						Coal = amount * 0.1f
 					};
+
+					//myVoxels[x, y, z].Clamp();
 				}
 			}
 		}
@@ -172,47 +126,17 @@ public partial class Chunk : Node3D
 	{
 		bool modified = false;
 
-		foreach ((Vector3I pos,Voxel voxel) in AllVoxels())
-		{
-			if (voxel.Solid() || voxel.Empty())
-				continue;
-
-			bool attached = false;
-
-			foreach (Vector3I dir in new Vector3I[]{ 
-				Vector3I.Up, 
-				Vector3I.Left, 
-				Vector3I.Right, 
-				Vector3I.Forward, 
-				Vector3I.Back})
-			{
-				Voxel other = VoxelAt(pos + dir);
-				if (other == null)
-					continue;
-
-				if (!other.Solid())
-					continue;
-				
-				attached = true;
-				if (voxel.CompressInto(other, FullValue))
-				{
-					modified = true;
-					break;
-				}
-			}
-
-			if (attached)
-				continue;
-
-			// Todo, if below-below is solid, allow making below solid
-			if (voxel.CompressInto(VoxelAt(pos + Vector3I.Down), FullValue))
-				modified = true;
-		}
+		//foreach ((Vector3I pos,Voxel voxel) in AllVoxels())
+		//{
+		//	if (voxel.Simulate(this, pos))
+		//	{
+		//		modified = true;
+		//		break;
+		//	}
+		//}
 
 		if (modified)
-		{
 			OwningTerrain.RegisterModification(this);
-		}
 	}
 
 	public Vector3I VoxelPosFromWorldPos(Vector3 aPos)
@@ -259,6 +183,7 @@ public partial class Chunk : Node3D
 	// Adaptation of https://paulbourke.net/geometry/polygonise/
 	public void RegenerateMesh()
 	{
+		return;
 		// TODO: this looks very computeshader'y
 		float unit = 1.0f / Resolution;
 

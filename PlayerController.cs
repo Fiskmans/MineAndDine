@@ -203,18 +203,9 @@ public partial class PlayerController : CharacterBody3D
 
         Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
 
-        terrainGenerator.Touch(area);
-
         foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
         {
-            foreach ((Vector3I voxelPosition, Chunk.Voxel voxel) in chunk.AffectedVoxels(area))
-            {
-                Chunk.Voxel below = chunk.VoxelAt(voxelPosition + Vector3I.Down);
-                voxel.CompressInto(below, Chunk.FullValue);
-            }
-
             chunk.Update();
-            terrainGenerator.RegisterModification(chunk);
         }
     }
 
