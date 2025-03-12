@@ -9,19 +9,19 @@ using static Godot.TabContainer;
 public partial class TerrainGenerator : Node3D
 {
 	[Export]
-	public float ChunkSize = 16;
+	public float myChunkSize = 16;
 
 	Dictionary<Vector3I, Chunk> myLoadedChunks = new Dictionary<Vector3I, Chunk>();
 
     [Export]
-    PackedScene chunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
+    PackedScene myChunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
 
 	public delegate void ChunkedChangeHandler(Chunk aChunk);
 
 	public event ChunkedChangeHandler OnChunkChange;
 
-    HashSet<Chunk> _myModifiedChunks = new HashSet<Chunk>();
     HashSet<Chunk> myModifiedChunks = new HashSet<Chunk>();
+    HashSet<Chunk> myModifiedChunkBuffer = new HashSet<Chunk>();
     HashSet<Chunk> myChunksToRemesh = new HashSet<Chunk>();
 
 	// Called when the node enters the scene tree for the first time.
@@ -33,7 +33,7 @@ public partial class TerrainGenerator : Node3D
 	public override void _Process(double delta)
 	{
 		// swap buffers so we don't end up in infinite loops
-		(_myModifiedChunks, myModifiedChunks) = (myModifiedChunks, _myModifiedChunks);
+		(myModifiedChunkBuffer, myModifiedChunks) = (myModifiedChunks, myModifiedChunkBuffer);
 
 		foreach (Chunk chunk in myChunksToRemesh)
 		{
@@ -44,13 +44,13 @@ public partial class TerrainGenerator : Node3D
 
 		if (OnChunkChange != null)
 		{
-			foreach (Chunk c in _myModifiedChunks)
+			foreach (Chunk c in myModifiedChunkBuffer)
 			{
 				OnChunkChange.Invoke(c);
 			}
 		}
 
-        _myModifiedChunks.Clear();
+        myModifiedChunkBuffer.Clear();
 	}
 
 	public void RegisterModification(Chunk aChunk)
@@ -63,10 +63,12 @@ public partial class TerrainGenerator : Node3D
 			{
 				for (int z = -1; z <= 0; z++)
 				{
-					Chunk c = TryGetChunk(aChunk.ChunkPos + new Vector3I(x, y, z));
+					Chunk c = TryGetChunk(aChunk.myChunkPos + new Vector3I(x, y, z));
 
 					if (c != null)
+					{
 						myChunksToRemesh.Add(c);
+					}
 				}
 			}
 		}
@@ -75,18 +77,18 @@ public partial class TerrainGenerator : Node3D
 	public Vector3I ChunkPosFromWorldPos(Vector3 aPosition)
 	{
 		return new Vector3I(
-			(int)(aPosition.X / ChunkSize),
-			(int)(aPosition.Y / ChunkSize),
-			(int)(aPosition.Z / ChunkSize));
+			(int)(aPosition.X / myChunkSize),
+			(int)(aPosition.Y / myChunkSize),
+			(int)(aPosition.Z / myChunkSize));
 	}
 
 	private Vector3 WorldPosFromChunkPos(Vector3I aPosition)
 	{
 		return new Vector3
 		{
-			X = (int)(aPosition.X * ChunkSize),
-			Y = (int)(aPosition.Y * ChunkSize),
-			Z = (int)(aPosition.Z * ChunkSize)
+			X = (int)(aPosition.X * myChunkSize),
+			Y = (int)(aPosition.Y * myChunkSize),
+			Z = (int)(aPosition.Z * myChunkSize)
 		};
 	}
 
@@ -104,7 +106,9 @@ public partial class TerrainGenerator : Node3D
             Chunk res;
 
             if (myLoadedChunks.TryGetValue(pos, out res))
+			{
                 yield return res;
+			}
         }
     }
 
@@ -131,12 +135,14 @@ public partial class TerrainGenerator : Node3D
 		Chunk res;
 
 		if (myLoadedChunks.TryGetValue(aPosition, out res))
+		{
 			return res;
+		}
 
-		res = (Chunk)chunkScene.Instantiate();
-		res.ChunkPos = aPosition;
-		res.Size = ChunkSize;
-		res.OwningTerrain = this;
+		res = (Chunk)myChunkScene.Instantiate();
+		res.myChunkPos = aPosition;
+		res.mySize = myChunkSize;
+		res.myOwningTerrain = this;
         res.Position = WorldPosFromChunkPos(aPosition);
 
 		myLoadedChunks.Add(aPosition, res);

@@ -187,7 +187,7 @@ public partial class PlayerController : CharacterBody3D
 
         rayParams.From = origin;
         rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
-        //rayParams.CollisionMask = 2; Sorry fixar snart :)
+        rayParams.CollisionMask = 2; 
 
         Dictionary intersection = GetWorld3D().DirectSpaceState.IntersectRay(rayParams); //https://github.com/godotengine/godot-docs-user-notes/discussions/100#discussioncomment-10655180 Probs won't matter tho
 
@@ -228,9 +228,9 @@ public partial class PlayerController : CharacterBody3D
                     continue;
                 }
 
-                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), voxel.Dirt);
+                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), voxel.myDirt);
 
-                voxel.Dirt -= amount;
+                voxel.myDirt -= amount;
             }
 
             myTerrainGenerator.RegisterModification(chunk);

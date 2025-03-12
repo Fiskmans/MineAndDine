@@ -13,6 +13,7 @@ namespace MineAndDine
 
         public override void _Ready()
         {
+            CollisionLayer = 2;
         }
 
         public void PickUp(PlayerController aPlayer)

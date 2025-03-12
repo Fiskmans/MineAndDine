@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=18 format=3 uid="uid://mwujfi7brask"]
 
 [ext_resource type="Texture2D" uid="uid://diwcvuml5m7fa" path="res://icon.svg" id="1_1tp12"]
 [ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="2_m5ruq"]
@@ -10,9 +10,6 @@
 [sub_resource type="SphereMesh" id="SphereMesh_uq1df"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fq6ae"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_v3q5b"]
-size = Vector3(100, 1, 100)
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_actfc"]
 
@@ -101,11 +98,7 @@ shape = SubResource("CapsuleShape3D_fq6ae")
 [node name="Terrain" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
 script = ExtResource("3_wcmku")
-ChunkSize = 7.0
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Terrain"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.684946, 0)
-shape = SubResource("BoxShape3D_v3q5b")
+myChunkSize = 7.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_6m1a7")

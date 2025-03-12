@@ -7,33 +7,33 @@ using static Godot.TextServer;
 public partial class Chunk : Node3D
 {
 	[Export]
-	public int Resolution { get; set; } = 16;
+	public int myResolution { get; set; } = 16;
 
-	public float Size = 1;
+	public float mySize = 1;
 
 	[Export]
-	public Vector3I ChunkPos = new Vector3I(0, 0, 0);
+	public Vector3I myChunkPos = new Vector3I(0, 0, 0);
 
-	public TerrainGenerator OwningTerrain = null;
+	public TerrainGenerator myOwningTerrain = null;
 
 	ArrayMesh myMesh = new ArrayMesh();
 	ConcavePolygonShape3D myCollisionMesh;
 	ShaderMaterial myMaterial;
 
-	public const float SurfaceValue = 0.5f;
+	public const float mySurfaceValue = 0.5f;
 
 	//I know they're not technically voxels :s
 	public class Voxel
 	{
-		public float Total { get { return Dirt + Coal; } }
-		public float Dirt = 0;
-		public float Coal = 0;
+		public float myTotal { get { return myDirt + myCoal; } }
+		public float myDirt = 0;
+		public float myCoal = 0;
 	}
 
-	static Voxel NullVoxel = new Voxel { };
+	static Voxel ourNullVoxel = new Voxel { };
 
 	// blame the source for weird order
-	static Vector3I[] Corners =
+	static Vector3I[] ourCorners =
 	{
 		new Vector3I(0, 0, 0),
 		new Vector3I(1, 0, 0),
@@ -52,25 +52,25 @@ public partial class Chunk : Node3D
 	{
 		GD.Randomize();
 		
-		myVoxels = new Voxel[Resolution, Resolution, Resolution];
+		myVoxels = new Voxel[myResolution, myResolution, myResolution];
 
-		for (int x = 0; x < Resolution; x++)
+		for (int x = 0; x < myResolution; x++)
 		{
-			for (int y = 0; y < Resolution; y++)
+			for (int y = 0; y < myResolution; y++)
 			{
-				for (int z = 0; z < Resolution; z++)
+				for (int z = 0; z < myResolution; z++)
 				{
-					float amount = 1.0f - y / (float)Resolution;
+					float amount = 1.0f - y / (float)myResolution;
 
-					amount -= ChunkPos.Y * 1.0f;
-					amount += ChunkPos.X * 0.05f;
-					amount += ChunkPos.Z * -0.1f;
+					amount -= myChunkPos.Y * 1.0f;
+					amount += myChunkPos.X * 0.05f;
+					amount += myChunkPos.Z * -0.1f;
 					amount += GD.Randf() * 0.03f;
 
 					myVoxels[x, y, z] = new Voxel
 					{
-						Dirt = amount * 0.9f,
-						Coal = amount * 0.1f
+						myDirt = amount * 0.9f,
+						myCoal = amount * 0.1f
 					};
 				}
 			}
@@ -80,8 +80,8 @@ public partial class Chunk : Node3D
 
 		myMaterial = meshComp.Mesh.SurfaceGetMaterial(0).Duplicate() as ShaderMaterial;
 
-		myMaterial.SetShaderParameter("Size", Size);
-		myMaterial.SetShaderParameter("Offset", ChunkPos);
+		myMaterial.SetShaderParameter("Size", mySize);
+		myMaterial.SetShaderParameter("Offset", myChunkPos);
 		myMaterial.SetShaderParameter("LightColor", new Vector3(0.8f, 0.7f, 0.5f));
 		myMaterial.SetShaderParameter("DarkColor", new Vector3(0.4f, 0.3f, 0.1f));
 
@@ -90,7 +90,7 @@ public partial class Chunk : Node3D
 		myCollisionMesh = new ConcavePolygonShape3D();
 		GetNode<CollisionShape3D>("Collision/CollisionMesh").Shape = myCollisionMesh;
 
-		OwningTerrain.RegisterModification(this);
+		myOwningTerrain.RegisterModification(this);
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -100,18 +100,18 @@ public partial class Chunk : Node3D
 
 	public Vector3I VoxelPosFromWorldPos(Vector3 aPos)
 	{
-		return (Vector3I)((aPos - Position) / Size * Resolution);
+		return (Vector3I)((aPos - Position) / mySize * myResolution);
 	}
 
 	public Vector3 WorldPosFromVoxelPos(Vector3I aVoxelPos)
 	{
-		return (Vector3)aVoxelPos * Size / Resolution + Position;
+		return (Vector3)aVoxelPos * mySize / myResolution + Position;
 	}
 
 
 	public IEnumerable<(Vector3, Voxel)> AffectedVoxels(Aabb aArea)
 	{
-		Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(Size, Size, Size)));
+		Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(mySize, mySize, mySize)));
 
 		foreach (Vector3I vPos in Utils.Every(
 			VoxelPosFromWorldPos(affected.Position),
@@ -124,28 +124,28 @@ public partial class Chunk : Node3D
 	Voxel VoxelAt(Vector3I aPos)
 	{
 		Vector3I pos = aPos;
-		Vector3I inChunkPos = ChunkPos;
+		Vector3I inChunkPos = myChunkPos;
 
-		if (pos.X >= Resolution)
+		if (pos.X >= myResolution)
 		{
 			inChunkPos.X += 1;
-			pos.X -= Resolution;
+			pos.X -= myResolution;
 		}
-		if (pos.Y >= Resolution)
+		if (pos.Y >= myResolution)
 		{
 			inChunkPos.Y += 1;
-			pos.Y -= Resolution;
+			pos.Y -= myResolution;
 		}
-		if (pos.Z >= Resolution)
+		if (pos.Z >= myResolution)
 		{
 			inChunkPos.Z += 1;
-			pos.Z -= Resolution;
+			pos.Z -= myResolution;
 		}
 
-		Chunk inChunk = OwningTerrain.TryGetChunk(inChunkPos);
+		Chunk inChunk = myOwningTerrain.TryGetChunk(inChunkPos);
 
 		if (inChunk == null)
-			return NullVoxel;
+			return ourNullVoxel;
 
 		return inChunk.myVoxels[pos.X, pos.Y, pos.Z];
 	}
@@ -154,17 +154,17 @@ public partial class Chunk : Node3D
 	public void RegenerateMesh()
 	{
 		// TODO: this looks very computeshader'y
-		float unit = 1.0f / Resolution;
+		float unit = 1.0f / myResolution;
 
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector3> normals = new List<Vector3>();
 		List<float> materials = new List<float>();
 
-		for (int x = 0; x < Resolution; x++)
+		for (int x = 0; x < myResolution; x++)
 		{
-			for (int y = 0; y < Resolution; y++)
+			for (int y = 0; y < myResolution; y++)
 			{
-				for (int z = 0; z < Resolution; z++)
+				for (int z = 0; z < myResolution; z++)
 				{
 					GenerateFragment(new Vector3I(x,y,z), vertices, normals, materials);
 				}
@@ -204,14 +204,14 @@ public partial class Chunk : Node3D
 		Voxel a = voxels[firstCorner];
 		Voxel b = voxels[secondCorner];
 
-		float weight = Mathf.InverseLerp(a.Total, b.Total, SurfaceValue);
+		float weight = Mathf.InverseLerp(a.myTotal, b.myTotal, mySurfaceValue);
 
 		PointInfo info;
 
-		info.Position = Utils.Lerp(Corners[firstCorner], Corners[secondCorner], weight);
+		info.Position = Utils.Lerp(ourCorners[firstCorner], ourCorners[secondCorner], weight);
 
-		float aFractionCoal = a.Coal / a.Total;
-		float bFractionCoal = b.Coal / b.Total;
+		float aFractionCoal = a.myCoal / a.myTotal;
+		float bFractionCoal = b.myCoal / b.myTotal;
 
 		info.Material = 1.0f - Mathf.Lerp(aFractionCoal, bFractionCoal, weight);
 
@@ -220,30 +220,30 @@ public partial class Chunk : Node3D
 
 	private void GenerateFragment(Vector3I aSubPosition, List<Vector3> aVertexSink, List<Vector3> aNormalSink, List<float> aMaterialSink)
 	{
-		float unit = 1.0f / Resolution * Size;
+		float unit = 1.0f / myResolution * mySize;
 
 		Vector3 orig = (Vector3)aSubPosition * unit;
 
 		Voxel[] corners = {
-			VoxelAt(aSubPosition + Corners[0]),
-			VoxelAt(aSubPosition + Corners[1]),
-			VoxelAt(aSubPosition + Corners[2]),
-			VoxelAt(aSubPosition + Corners[3]),
-			VoxelAt(aSubPosition + Corners[4]),
-			VoxelAt(aSubPosition + Corners[5]),
-			VoxelAt(aSubPosition + Corners[6]),
-			VoxelAt(aSubPosition + Corners[7])
+			VoxelAt(aSubPosition + ourCorners[0]),
+			VoxelAt(aSubPosition + ourCorners[1]),
+			VoxelAt(aSubPosition + ourCorners[2]),
+			VoxelAt(aSubPosition + ourCorners[3]),
+			VoxelAt(aSubPosition + ourCorners[4]),
+			VoxelAt(aSubPosition + ourCorners[5]),
+			VoxelAt(aSubPosition + ourCorners[6]),
+			VoxelAt(aSubPosition + ourCorners[7])
 		};
 
 		int index = 0;
-		if (corners[0].Total < SurfaceValue) index += 1;
-		if (corners[1].Total < SurfaceValue) index += 2;
-		if (corners[2].Total < SurfaceValue) index += 4;
-		if (corners[3].Total < SurfaceValue) index += 8;
-		if (corners[4].Total < SurfaceValue) index += 16;
-		if (corners[5].Total < SurfaceValue) index += 32;
-		if (corners[6].Total < SurfaceValue) index += 64;
-		if (corners[7].Total < SurfaceValue) index += 128;
+		if (corners[0].myTotal < mySurfaceValue) index += 1;
+		if (corners[1].myTotal < mySurfaceValue) index += 2;
+		if (corners[2].myTotal < mySurfaceValue) index += 4;
+		if (corners[3].myTotal < mySurfaceValue) index += 8;
+		if (corners[4].myTotal < mySurfaceValue) index += 16;
+		if (corners[5].myTotal < mySurfaceValue) index += 32;
+		if (corners[6].myTotal < mySurfaceValue) index += 64;
+		if (corners[7].myTotal < mySurfaceValue) index += 128;
 
 		PointInfo[] edges =
 		{
@@ -261,11 +261,11 @@ public partial class Chunk : Node3D
 			PointOnEdge(corners, 3, 7)
 		};
 				
-		for (int i = 0; TriTable[index, i] != -1; i += 3)
+		for (int i = 0; ourTriTable[index, i] != -1; i += 3)
 		{
-			PointInfo a = edges[TriTable[index, i + 0]];
-			PointInfo b = edges[TriTable[index, i + 1]];
-			PointInfo c = edges[TriTable[index, i + 2]];
+			PointInfo a = edges[ourTriTable[index, i + 0]];
+			PointInfo b = edges[ourTriTable[index, i + 1]];
+			PointInfo c = edges[ourTriTable[index, i + 2]];
 
 
 			Vector3 aPos = orig + a.Position * unit;
@@ -289,7 +289,7 @@ public partial class Chunk : Node3D
 	}
 
 
-	static int[,] TriTable = new int[256, 16] {
+	static int[,] ourTriTable = new int[256, 16] {
 		{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, 
 		{  0,  8,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, 
 		{  0,  1,  9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, 
