@@ -18,7 +18,7 @@ material = SubResource("ShaderMaterial_bo4vu")
 
 [node name="Chunk" type="Node3D"]
 script = ExtResource("1_0u3yb")
-Resolution = 7
+myResolution = 7
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_2dxxd")

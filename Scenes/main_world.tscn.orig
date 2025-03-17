@@ -45,9 +45,12 @@ size = Vector3(1, 1, 1.01984)
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.71237, 0)
 script = ExtResource("2_m5ruq")
+<<<<<<< HEAD
 gravity = 8.0
 Reach = 100.0
 MiningPower = 4.0
+=======
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
@@ -112,6 +115,14 @@ material_override = SubResource("StandardMaterial3D_clnj1")
 mesh = SubResource("BoxMesh_lmc21")
 skeleton = NodePath("")
 
+<<<<<<< HEAD
+[node name="floor" type="MeshInstance3D" parent="WorldEnvironment"]
+transform = Transform3D(100, 0, 0, 0, 100, 0, 0, 0, 100, 0, 0, 0)
+visible = false
+material_override = SubResource("StandardMaterial3D_8ac4f")
+mesh = SubResource("PlaneMesh_07y88")
+surface_material_override/0 = SubResource("StandardMaterial3D_bu80i")
+=======
 [node name="pickUp" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55107, 4.90979)
 script = ExtResource("5_uq1df")
@@ -122,3 +133,4 @@ surface_material_override/0 = SubResource("StandardMaterial3D_uq1df")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="pickUp"]
 shape = SubResource("BoxShape3D_uq1df")
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f

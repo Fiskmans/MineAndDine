@@ -31,9 +31,15 @@ public partial class TerrainGenerator : Node3D
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
+<<<<<<< HEAD
     {
 		HashSet<Chunk> chunks = new HashSet<Chunk>(myModifiedChunks);
         myModifiedChunks.Clear();
+=======
+	{
+		// swap buffers so we don't end up in infinite loops
+		(myModifiedChunkBuffer, myModifiedChunks) = (myModifiedChunks, myModifiedChunkBuffer);
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
         foreach (Chunk c in chunks)
 		{
@@ -49,6 +55,7 @@ public partial class TerrainGenerator : Node3D
         myChunksToRemesh.Clear();
     }
 
+<<<<<<< HEAD
     public void RegisterModification(Chunk aChunk)
 	{
 		myModifiedChunks.Add(aChunk);
@@ -60,6 +67,38 @@ public partial class TerrainGenerator : Node3D
             if (c != null)
                 myChunksToRemesh.Add(c);
         }
+=======
+		if (OnChunkChange != null)
+		{
+			foreach (Chunk c in myModifiedChunkBuffer)
+			{
+				OnChunkChange.Invoke(c);
+			}
+		}
+
+        myModifiedChunkBuffer.Clear();
+	}
+
+	public void RegisterModification(Chunk aChunk)
+	{
+		myModifiedChunks.Add(aChunk);
+
+		for (int x = -1; x <= 0; x++)
+		{
+			for (int y = -1; y <= 0; y++)
+			{
+				for (int z = -1; z <= 0; z++)
+				{
+					Chunk c = TryGetChunk(aChunk.myChunkPos + new Vector3I(x, y, z));
+
+					if (c != null)
+					{
+						myChunksToRemesh.Add(c);
+					}
+				}
+			}
+		}
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 	}
 
 	public Vector3I ChunkPosFromWorldPos(Vector3 aPosition)

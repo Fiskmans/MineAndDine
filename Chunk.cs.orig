@@ -25,16 +25,39 @@ public partial class Chunk : Node3D
 	ConcavePolygonShape3D myCollisionMesh;
 	ShaderMaterial myMaterial;
 
+<<<<<<< HEAD
+	public const float FullValue = 1.0f;
+	public const float SurfaceValue = 0.5f;
+=======
 	public const float mySurfaceValue = 0.5f;
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 	public ref struct NodeMapping
 	{
+<<<<<<< HEAD
 		public Vector3I Position;
 		public ref MaterialsList Node;
 	}
 
+    struct Colors
+	{
+		public static readonly Vector3 Dirt = new Vector3(0.8f, 0.7f, 0.4f);
+		public static readonly Vector3 Coal = new Vector3(0.1f, 0.1f, 0.1f);
+	}
+
 	// blame the source for weird order
-	static readonly Vector3I[] ourCorners =
+	static readonly Vector3I[] Corners =
+=======
+		public float myTotal { get { return myDirt + myCoal; } }
+		public float myDirt = 0;
+		public float myCoal = 0;
+	}
+
+	static Voxel ourNullVoxel = new Voxel { };
+
+	// blame the source for weird order
+	static Vector3I[] ourCorners =
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 	{
 		new Vector3I(0, 0, 0),
 		new Vector3I(1, 0, 0),
@@ -52,8 +75,13 @@ public partial class Chunk : Node3D
 	public override void _Ready()
 	{
 		GD.Randomize();
+<<<<<<< HEAD
 
-        myTerrainNodes = new MaterialsList[myResolution, myResolution, myResolution];
+        myTerrainNodes = new MaterialsList[Resolution, Resolution, Resolution];
+=======
+		
+		myVoxels = new Voxel[myResolution, myResolution, myResolution];
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 		for (int x = 0; x < myResolution; x++)
 		{
@@ -68,8 +96,16 @@ public partial class Chunk : Node3D
 					amount += myChunkPos.Z * -0.1f;
 					amount += GD.Randf() * 0.03f;
 
+<<<<<<< HEAD
                     myTerrainNodes[x, y, z][(int)MaterialType.Dirt] = amount * 0.9f;
 					myTerrainNodes[x, y, z][(int)MaterialType.Coal] = amount * 0.1f;
+=======
+					myVoxels[x, y, z] = new Voxel
+					{
+						myDirt = amount * 0.9f,
+						myCoal = amount * 0.1f
+					};
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 				}
 			}
 		}
@@ -139,19 +175,26 @@ public partial class Chunk : Node3D
 
     public IEnumerable<Vector3I> AffectedNodes(Aabb aArea)
     {
-        Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(mySize, mySize, mySize)));
+        Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(Size, Size, Size)));
 
+<<<<<<< HEAD
 		return Utils.Every(
 			NodePosFromWorldPos(affected.Position),
 			NodePosFromWorldPos(affected.End) - new Vector3I(1, 1, 1));
     }
+=======
+	public IEnumerable<(Vector3, Voxel)> AffectedVoxels(Aabb aArea)
+	{
+		Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(mySize, mySize, mySize)));
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 public ref MaterialsList NodeAt(Vector3I aPos)
 {
 	Vector3I offset = Utils.TruncatedDivision(aPos, new Vector3I(Resolution, Resolution, Resolution));
-	Vector3I chunkPos = myChunkPos + offset;
-	Vector3I pos = aPos - offset * myResolution;
+	Vector3I chunkPos = ChunkPos + offset;
+	Vector3I pos = aPos - offset * Resolution;
 
+<<<<<<< HEAD
 	Chunk chunk = offset.Equals(Vector3I.Zero) ?
 					this : OwningTerrain.TryGetChunk(chunkPos);
 
@@ -160,6 +203,36 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 
 	return ref chunk.myTerrainNodes[pos.X, pos.Y, pos.Z];
 }
+=======
+	Voxel VoxelAt(Vector3I aPos)
+	{
+		Vector3I pos = aPos;
+		Vector3I inChunkPos = myChunkPos;
+
+		if (pos.X >= myResolution)
+		{
+			inChunkPos.X += 1;
+			pos.X -= myResolution;
+		}
+		if (pos.Y >= myResolution)
+		{
+			inChunkPos.Y += 1;
+			pos.Y -= myResolution;
+		}
+		if (pos.Z >= myResolution)
+		{
+			inChunkPos.Z += 1;
+			pos.Z -= myResolution;
+		}
+
+		Chunk inChunk = myOwningTerrain.TryGetChunk(inChunkPos);
+
+		if (inChunk == null)
+			return ourNullVoxel;
+
+		return inChunk.myVoxels[pos.X, pos.Y, pos.Z];
+	}
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 	// Adaptation of https://paulbourke.net/geometry/polygonise/
 	public void RegenerateMesh()
@@ -213,16 +286,25 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 	private PointInfo PointOnEdge(ref MaterialsList aFirstNode, ref MaterialsList aSecondNode, int firstCorner, int secondCorner)
 	{
 
+<<<<<<< HEAD
 		float weight = Mathf.InverseLerp(
 			MaterialInteractions.Total(ref aFirstNode),  
 			MaterialInteractions.Total(ref aSecondNode), 
 			SurfaceValue);
+=======
+		float weight = Mathf.InverseLerp(a.myTotal, b.myTotal, mySurfaceValue);
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 		PointInfo info;
 
 		info.Position = Utils.Lerp(ourCorners[firstCorner], ourCorners[secondCorner], weight);
 
+<<<<<<< HEAD
 		info.Material = Vector3.Zero;
+=======
+		float aFractionCoal = a.myCoal / a.myTotal;
+		float bFractionCoal = b.myCoal / b.myTotal;
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 
 		if (Unsafe.IsNullRef(ref aFirstNode) || Unsafe.IsNullRef(ref aSecondNode))
@@ -249,25 +331,48 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 
 		Vector3 orig = (Vector3)aSubPosition * unit;
 
-		ref MaterialsList corner0 = ref NodeAt(aSubPosition + ourCorners[0]);
-		ref MaterialsList corner1 = ref NodeAt(aSubPosition + ourCorners[1]);
-		ref MaterialsList corner2 = ref NodeAt(aSubPosition + ourCorners[2]);
-		ref MaterialsList corner3 = ref NodeAt(aSubPosition + ourCorners[3]);
-		ref MaterialsList corner4 = ref NodeAt(aSubPosition + ourCorners[4]);
-		ref MaterialsList corner5 = ref NodeAt(aSubPosition + ourCorners[5]);
-		ref MaterialsList corner6 = ref NodeAt(aSubPosition + ourCorners[6]);
-		ref MaterialsList corner7 = ref NodeAt(aSubPosition + ourCorners[7]);
+<<<<<<< HEAD
+		ref MaterialsList corner0 = ref NodeAt(aSubPosition + Corners[0]);
+		ref MaterialsList corner1 = ref NodeAt(aSubPosition + Corners[1]);
+		ref MaterialsList corner2 = ref NodeAt(aSubPosition + Corners[2]);
+		ref MaterialsList corner3 = ref NodeAt(aSubPosition + Corners[3]);
+		ref MaterialsList corner4 = ref NodeAt(aSubPosition + Corners[4]);
+		ref MaterialsList corner5 = ref NodeAt(aSubPosition + Corners[5]);
+		ref MaterialsList corner6 = ref NodeAt(aSubPosition + Corners[6]);
+		ref MaterialsList corner7 = ref NodeAt(aSubPosition + Corners[7]);
 
 
 		int index = 0;
-		if (!MaterialInteractions.Solid(ref corner0, mySurfaceValue)) index += 1;
-		if (!MaterialInteractions.Solid(ref corner1, mySurfaceValue)) index += 2;
-		if (!MaterialInteractions.Solid(ref corner2, mySurfaceValue)) index += 4;
-		if (!MaterialInteractions.Solid(ref corner3, mySurfaceValue)) index += 8;
-		if (!MaterialInteractions.Solid(ref corner4, mySurfaceValue)) index += 16;
-		if (!MaterialInteractions.Solid(ref corner5, mySurfaceValue)) index += 32;
-		if (!MaterialInteractions.Solid(ref corner6, mySurfaceValue)) index += 64;
-		if (!MaterialInteractions.Solid(ref corner7, mySurfaceValue)) index += 128;
+		if (!MaterialInteractions.Solid(ref corner0, SurfaceValue)) index += 1;
+		if (!MaterialInteractions.Solid(ref corner1, SurfaceValue)) index += 2;
+		if (!MaterialInteractions.Solid(ref corner2, SurfaceValue)) index += 4;
+		if (!MaterialInteractions.Solid(ref corner3, SurfaceValue)) index += 8;
+		if (!MaterialInteractions.Solid(ref corner4, SurfaceValue)) index += 16;
+		if (!MaterialInteractions.Solid(ref corner5, SurfaceValue)) index += 32;
+		if (!MaterialInteractions.Solid(ref corner6, SurfaceValue)) index += 64;
+		if (!MaterialInteractions.Solid(ref corner7, SurfaceValue)) index += 128;
+=======
+		Voxel[] corners = {
+			VoxelAt(aSubPosition + ourCorners[0]),
+			VoxelAt(aSubPosition + ourCorners[1]),
+			VoxelAt(aSubPosition + ourCorners[2]),
+			VoxelAt(aSubPosition + ourCorners[3]),
+			VoxelAt(aSubPosition + ourCorners[4]),
+			VoxelAt(aSubPosition + ourCorners[5]),
+			VoxelAt(aSubPosition + ourCorners[6]),
+			VoxelAt(aSubPosition + ourCorners[7])
+		};
+
+		int index = 0;
+		if (corners[0].myTotal < mySurfaceValue) index += 1;
+		if (corners[1].myTotal < mySurfaceValue) index += 2;
+		if (corners[2].myTotal < mySurfaceValue) index += 4;
+		if (corners[3].myTotal < mySurfaceValue) index += 8;
+		if (corners[4].myTotal < mySurfaceValue) index += 16;
+		if (corners[5].myTotal < mySurfaceValue) index += 32;
+		if (corners[6].myTotal < mySurfaceValue) index += 64;
+		if (corners[7].myTotal < mySurfaceValue) index += 128;
+>>>>>>> d143978ad2170cddcb0eea7e0d3c0827828e6b4f
 
 		PointInfo[] edges =
 		{
