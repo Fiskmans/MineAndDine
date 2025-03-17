@@ -53,7 +53,7 @@ public partial class TerrainGenerator : Node3D
 	{
 		myModifiedChunks.Add(aChunk);
 
-		foreach(Vector3I pos in Utils.Every(aChunk.ChunkPos - new Vector3I(1,1,1), aChunk.ChunkPos))
+		foreach(Vector3I pos in Utils.Every(aChunk.myChunkPos - new Vector3I(1,1,1), aChunk.myChunkPos))
         {
             Chunk c = TryGetChunk(pos);
 

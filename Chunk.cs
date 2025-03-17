@@ -61,7 +61,7 @@ public partial class Chunk : Node3D
 			{
 				for (int z = 0; z < myResolution; z++)
 				{
-					float amount = 1.0f - y / (float)myResolution;
+					float amount = 1.0f - y / (float)myResolution - 2;
 
 					amount -= myChunkPos.Y * 1.0f;
 					amount += myChunkPos.X * 0.05f;
@@ -117,14 +117,14 @@ public partial class Chunk : Node3D
 	{
 		bool modified = false;
 
-		foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
+		foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(myResolution - 1, myResolution - 1, myResolution - 1)))
 		{
 			if (Simulate(pos))
 				modified = true;
 		}
 
 		if (modified)
-			OwningTerrain.RegisterModification(this);
+			myOwningTerrain.RegisterModification(this);
 	}
 
 	public Vector3I NodePosFromWorldPos(Vector3 aPos)
@@ -148,12 +148,12 @@ public partial class Chunk : Node3D
 
 public ref MaterialsList NodeAt(Vector3I aPos)
 {
-	Vector3I offset = Utils.TruncatedDivision(aPos, new Vector3I(Resolution, Resolution, Resolution));
+	Vector3I offset = Utils.TruncatedDivision(aPos, new Vector3I(myResolution, myResolution, myResolution));
 	Vector3I chunkPos = myChunkPos + offset;
 	Vector3I pos = aPos - offset * myResolution;
 
 	Chunk chunk = offset.Equals(Vector3I.Zero) ?
-					this : OwningTerrain.TryGetChunk(chunkPos);
+					this : myOwningTerrain.TryGetChunk(chunkPos);
 
 	if (chunk == null)
 		return ref Unsafe.NullRef<MaterialsList>();
@@ -216,7 +216,7 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 		float weight = Mathf.InverseLerp(
 			MaterialInteractions.Total(ref aFirstNode),  
 			MaterialInteractions.Total(ref aSecondNode), 
-			SurfaceValue);
+			mySurfaceValue);
 
 		PointInfo info;
 

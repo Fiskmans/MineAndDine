@@ -45,9 +45,6 @@ size = Vector3(1, 1, 1.01984)
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.71237, 0)
 script = ExtResource("2_m5ruq")
-gravity = 8.0
-Reach = 100.0
-MiningPower = 4.0
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 
@@ -101,7 +98,6 @@ shape = SubResource("CapsuleShape3D_fq6ae")
 [node name="Terrain" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
 script = ExtResource("3_wcmku")
-myChunkSize = 7.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_6m1a7")

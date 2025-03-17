@@ -60,7 +60,7 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _PhysicsProcess(double delta)
     {
-        if (Input.IsActionPressed("main_interact"))
+        if (Input.IsActionJustPressed("main_interact"))
             Interact((float)delta);
 
         if (Input.IsActionJustPressed("secondary_interact"))
@@ -72,11 +72,6 @@ public partial class PlayerController : CharacterBody3D
 
     private void ApplyMovement(double delta, Vector3 direction)
     {
-        if (direction.Dot(forward) < 0.2f)
-        {
-            myIsSprinting = false;
-        }
-
         myTargetVelocity.X = direction.X * mySpeed * (myIsSprinting ? mySprintMultiplier : 1);
         myTargetVelocity.Z = direction.Z * mySpeed * (myIsSprinting ? mySprintMultiplier : 1);
 
@@ -93,7 +88,7 @@ public partial class PlayerController : CharacterBody3D
         }
         else
         {
-            myTargetVelocity.Y -= gravity * (float)delta;
+            myTargetVelocity.Y -= myGravity * (float)delta;
         }
 
         Velocity = myTargetVelocity;
@@ -138,6 +133,11 @@ public partial class PlayerController : CharacterBody3D
 			// Setting the basis property will affect the rotation of the node.
 			GetNode<Node3D>("meshPivot").Basis = Basis.LookingAt(direction);
 		}
+
+        if (direction.Dot(forward) < 0.2f)
+        {
+            myIsSprinting = false;
+        }
 
         return direction;
     }
@@ -194,13 +194,13 @@ public partial class PlayerController : CharacterBody3D
 
             
 
-        if (intersection["collider"].Obj is PickupObject)
+        if (intersect["collider"].Obj is PickupObject)
         {
-            PickUpObj(intersection);
+            PickUpObj(intersect);
         }
         else
         {
-            Mine(intersection);
+            Mine(intersect);
         }
 
     }
@@ -214,9 +214,9 @@ public partial class PlayerController : CharacterBody3D
 
         Vector3 pos = (Vector3)intersect["position"];
 
-        Aabb area = new Aabb(pos - new Vector3(MiningRadius, MiningRadius, MiningRadius), new Vector3(MiningRadius, MiningRadius, MiningRadius) * 2);
+        Aabb area = new Aabb(pos - new Vector3(myMiningRadius, myMiningRadius, myMiningRadius), new Vector3(myMiningRadius, myMiningRadius, myMiningRadius) * 2);
 
-        foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
+        foreach (Chunk chunk in myTerrainGenerator.AffectedChunks(area))
         {
             chunk.Update();
         }
@@ -231,7 +231,7 @@ public partial class PlayerController : CharacterBody3D
         PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
 
 		rayParams.From = origin;
-		rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * Reach;
+		rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
 		rayParams.CollisionMask = 2;
 
         Dictionary intersect = GetWorld3D().DirectSpaceState.IntersectRay(rayParams);
@@ -247,6 +247,17 @@ public partial class PlayerController : CharacterBody3D
         myHeldObject = objToPickUp;
     }
 
+    private void DropHeldObject()
+    {
+        if (myHeldObject != null)
+        {
+            myHeldObject.Drop();
+
+            myHeldObject = null;
+        }
+
+    }
+
     private void Mine(Dictionary anIntersection)
     {
         Vector3 pos = ((Vector3)anIntersection["position"]);
@@ -255,24 +266,24 @@ public partial class PlayerController : CharacterBody3D
 
         myTerrainGenerator.Touch(area);
 
-        float dist;
-
         foreach (Chunk chunk in myTerrainGenerator.AffectedChunks(area))
         {
-            foreach (var (voxelPosition, voxel) in chunk.AffectedVoxels(area))
+            foreach (Vector3I nodePos in chunk.AffectedNodes(area))
             {
-                dist = pos.DistanceTo(voxelPosition);
+                float dist = pos.DistanceTo(chunk.WorldPosFromVoxelPos(nodePos));
 
                 if (dist >= myMiningRadius)
-                {
-                    continue;
-                }
+                        continue;
+        
+                ref MaterialsList node = ref chunk.NodeAt(nodePos);
+        
+                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), node[(int)MaterialType.Dirt]);
 
-                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), voxel.myDirt);
-
-                voxel.myDirt -= amount;
+                node[(int)MaterialType.Dirt] -= amount;
             }
+   
 
+            chunk.Update();
             myTerrainGenerator.RegisterModification(chunk);
         }
     }
