@@ -52,19 +52,13 @@ public partial class TerrainGenerator : Node3D
 	{
 		myModifiedChunks.Add(aChunk);
 
-		for (int x = -1; x <= 0; x++)
-		{
-			for (int y = -1; y <= 0; y++)
-			{
-				for (int z = -1; z <= 0; z++)
-				{
-					Chunk c = TryGetChunk(aChunk.ChunkPos + new Vector3I(x, y, z));
+		foreach(Vector3I pos in Utils.Every(aChunk.ChunkPos - new Vector3I(1,1,1), aChunk.ChunkPos))
+        {
+            Chunk c = TryGetChunk(pos);
 
-					if (c != null)
-						myChunksToRemesh.Add(c);
-				}
-			}
-		}
+            if (c != null)
+                myChunksToRemesh.Add(c);
+        }
 	}
 
 	public Vector3I ChunkPosFromWorldPos(Vector3 aPosition)

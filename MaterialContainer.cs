@@ -5,101 +5,105 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using MineAndDine.Attributes;
-using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace MineAndDine
 {
-    public abstract class MaterialContainer
+
+    public enum MaterialType : int
+    {
+        Dirt,
+        Coal,
+        CoalDust,
+
+        Count
+    }
+
+    public class MaterialGroups
+    {
+        public static readonly int[] All = Enumerable.Range(0, ((int)MaterialType.Count)).ToArray();
+        public static readonly int[] Loose = [(int)MaterialType.Dirt, (int)MaterialType.CoalDust];
+
+        public struct ColorMapping
+        {
+            public int Index;
+            public Vector3 Color;
+        }
+
+        public static readonly ColorMapping[] Colored = [
+                new ColorMapping{ Index = (int)MaterialType.Dirt,       Color = new Vector3(0.8f, 0.6f, 0.2f) },
+                new ColorMapping{ Index = (int)MaterialType.Coal,       Color = new Vector3(0.2f, 0.2f, 0.3f) },
+                new ColorMapping{ Index = (int)MaterialType.CoalDust,   Color = new Vector3(0.4f, 0.4f, 0.5f) }
+            ];
+    }
+
+    [InlineArray((int)MaterialType.Count)]
+    public struct MaterialsList
+    {
+        private float InternalStorage;
+    }
+
+    public class MaterialInteractions
     {
         public const float epsilon = 0.001f;
 
-        public float Space { get { return Mathf.Max(0, GetVolume() - Total); } }
-
-        public float Total { get { return Materials<MaterialTypeAttribute>().Select(f => (float)f.GetValue(this)).Sum(); } }
-
-        [LooseMaterial]
-        [Colored(0.1f, 0.1f, 0.3f)]
-        public float Dirt;
-
-        [LooseMaterial]
-        [Colored(0.1f, 0.1f, 0.3f)]
-        public float CoalDust;
-
-        [StaticMaterial]
-        [CrushesInto("CoalDust")]
-        [Colored(0.1f, 0.1f, 0.3f)]
-        public float Coal;
-
-        public abstract float GetVolume();
-
-        public bool Solid(float aSurface = 0.5f)
+        public static bool MoveLoose(ref MaterialsList aFrom, ref MaterialsList aTo, float aVolume)
         {
-            return Total > aSurface;
-        }
+            float available = 0;
 
-        public bool Empty()
-        {
-            return Total < epsilon;
-        }
-
-        public void Clamp()
-        {
-            foreach (FieldInfo material in Materials<MaterialTypeAttribute>())
-            {
-                material.SetValue(this, Mathf.Max(0, (float)material.GetValue(this)));
-            }
-        }
-
-        override public string ToString()
-        {
-            return string.Join(";", Materials<MaterialTypeAttribute>()
-                .Select(f => $"{f.Name}: {f.GetValue(this)}"));
-        }
-
-        public bool Take<T>(MaterialContainer aFrom) where T : MaterialTypeAttribute
-        {
-            FieldInfo[] materials = Materials<T>();
-
-            float available = materials.Sum((field) => (float)field.GetValue(aFrom));
+            foreach (int mat in MaterialGroups.Loose)
+                available += aFrom[mat];
 
             if (available < epsilon)
                 return false;
 
-            float fraction = Space / available;
+
+            float spaceAvailable = aVolume - Total(ref aTo);
+
+            float fraction = spaceAvailable / available;
 
             if (fraction < epsilon)
                 return false;
 
             if (fraction >= 1.0f)
             {
-                foreach (FieldInfo field in materials)
+                foreach (int mat in MaterialGroups.Loose)
                 {
-                    float sum = (float)field.GetValue(aFrom) + (float)field.GetValue(this);
-                    field.SetValue(this, sum);
-                    field.SetValue(aFrom, 0);
+                    aTo[mat] += aFrom[mat];
+                    aFrom[mat] = 0;
                 }
             }
             else
             {
-                foreach (FieldInfo field in materials)
-                {
-                    float amount = (float)field.GetValue(aFrom) * fraction;
+                float fractionLeft = 1.0f - fraction;
 
-                    field.SetValue(this, (float)field.GetValue(this) + amount);
-                    field.SetValue(aFrom, Mathf.Max(0, (float)field.GetValue(aFrom) - amount));
+                foreach (int mat in MaterialGroups.Loose)
+                {
+                    aTo[mat] += aFrom[mat] * fraction;
+                    aFrom[mat] *= fractionLeft;
                 }
             }
 
-            return false;
-
+            return true;
         }
 
-        static public FieldInfo[] Materials<T>() where T : Attribute
+        public static bool Solid(ref MaterialsList aList, float aSurfaceValue)
         {
-            return typeof(MaterialContainer).GetFields()
-                .Where(field => field.GetCustomAttributes<T>().Count() > 0)
-                .ToArray();
+
+            return Total(ref aList) > aSurfaceValue;
+        }
+
+        public static float Total(ref MaterialsList aList)
+        {
+            float sum = 0;
+
+            if (Unsafe.IsNullRef(ref aList))
+                return sum;
+
+            foreach (int mat in MaterialGroups.All)
+                sum += aList[mat];
+
+            return sum;
         }
     }
 }

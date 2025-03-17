@@ -51,8 +51,8 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _PhysicsProcess(double delta)
     {
-        if (Input.IsActionJustPressed("main_interact"))
-            Interact();
+        if (Input.IsActionPressed("main_interact"))
+            Interact((float)delta);
 
         if (Input.IsActionJustPressed("secondary_interact"))
             SecondaryInteract();
@@ -161,7 +161,7 @@ public partial class PlayerController : CharacterBody3D
 		}
 	}
 
-	private void Interact()
+	private void Interact(float aDeltaTime)
     {
         Dictionary intersect = RaycastMouse();
 
@@ -176,15 +176,19 @@ public partial class PlayerController : CharacterBody3D
 
         foreach (Chunk chunk in terrainGenerator.AffectedChunks(area))
         {
-            foreach ((Vector3I voxelPosition, Chunk.Voxel voxel) in chunk.AffectedVoxels(area))
+            foreach (Vector3I nodePos in chunk.AffectedNodes(area))
             {
-                float dist = pos.DistanceTo(chunk.WorldPosFromVoxelPos(voxelPosition));
+                float dist = pos.DistanceTo(chunk.WorldPosFromVoxelPos(nodePos));
 
                 if (dist >= MiningRadius)
                     continue;
-                float amount = Mathf.Min(MiningPower * (1.0f - dist / MiningRadius), voxel.Dirt);
+                
+                ref MaterialsList node = ref chunk.NodeAt(nodePos);
+                
+                float amount = Mathf.Min(MiningPower * (1.0f - dist / MiningRadius) * aDeltaTime, node[(int)MaterialType.Dirt]);
 
-                voxel.Dirt -= amount;
+
+                node[(int)MaterialType.Dirt] -= amount;
             }
 
             chunk.Update();

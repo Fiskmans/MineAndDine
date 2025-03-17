@@ -47,7 +47,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.71237, 0)
 script = ExtResource("2_m5ruq")
 gravity = 8.0
 Reach = 100.0
-MiningPower = 0.8
+MiningPower = 4.0
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
 

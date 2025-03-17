@@ -1,11 +1,13 @@
 using Godot;
 using MineAndDine;
-using MineAndDine.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using static Godot.TextServer;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public partial class Chunk : Node3D
 {
@@ -26,28 +28,13 @@ public partial class Chunk : Node3D
 	public const float FullValue = 1.0f;
 	public const float SurfaceValue = 0.5f;
 
-	//I know they're not technically voxels :s
-	public class Voxel : MaterialContainer
+	public ref struct NodeMapping
 	{
-        public override float GetVolume() { return 1.0f; }
-
-        public bool Simulate(Chunk aOwner, Vector3I aSubPosition)
-        {
-			Voxel below = aOwner.VoxelAt(aSubPosition + Vector3I.Down);
-
-			bool modified = false;
-
-			if (below != null)
-				if (below.Take<LooseMaterialAttribute>(this))
-                    modified = true;
-
-            return modified;
-        }
+		public Vector3I Position;
+		public ref MaterialsList Node;
 	}
 
-	static Voxel NullVoxel = new Voxel { };
-
-	struct Colors
+    struct Colors
 	{
 		public static readonly Vector3 Dirt = new Vector3(0.8f, 0.7f, 0.4f);
 		public static readonly Vector3 Coal = new Vector3(0.1f, 0.1f, 0.1f);
@@ -66,14 +53,14 @@ public partial class Chunk : Node3D
 		new Vector3I(0, 1, 1),
 	};
 
-	Voxel[,,] myVoxels;
+	MaterialsList[,,] myTerrainNodes;
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		GD.Randomize();
-		
-		myVoxels = new Voxel[Resolution, Resolution, Resolution];
+
+        myTerrainNodes = new MaterialsList[Resolution, Resolution, Resolution];
 
 		for (int x = 0; x < Resolution; x++)
 		{
@@ -88,13 +75,8 @@ public partial class Chunk : Node3D
 					amount += ChunkPos.Z * -0.1f;
 					amount += GD.Randf() * 0.03f;
 
-					myVoxels[x, y, z] = new Voxel
-					{
-						Dirt = amount * 0.9f,
-						Coal = amount * 0.1f
-					};
-
-					//myVoxels[x, y, z].Clamp();
+                    myTerrainNodes[x, y, z][(int)MaterialType.Dirt] = amount * 0.9f;
+					myTerrainNodes[x, y, z][(int)MaterialType.Coal] = amount * 0.1f;
 				}
 			}
 		}
@@ -122,24 +104,37 @@ public partial class Chunk : Node3D
 	{
 	}
 
+	private bool Simulate(Vector3I aNodePos)
+	{
+		bool modified = false;
+
+		ref MaterialsList node = ref NodeAt(aNodePos);
+		ref MaterialsList below = ref NodeAt(aNodePos + Vector3I.Down);
+		
+		if (!Unsafe.IsNullRef(ref below))
+		{
+			if (MaterialInteractions.MoveLoose(ref node, ref below, 1))
+				modified = true;
+		}
+
+		return modified;
+	}
+
 	public void Update()
 	{
 		bool modified = false;
 
-		//foreach ((Vector3I pos,Voxel voxel) in AllVoxels())
-		//{
-		//	if (voxel.Simulate(this, pos))
-		//	{
-		//		modified = true;
-		//		break;
-		//	}
-		//}
+		foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
+		{
+			if (Simulate(pos))
+				modified = true;
+		}
 
 		if (modified)
 			OwningTerrain.RegisterModification(this);
 	}
 
-	public Vector3I VoxelPosFromWorldPos(Vector3 aPos)
+	public Vector3I NodePosFromWorldPos(Vector3 aPos)
 	{
 		return (Vector3I)((aPos - Position) / Size * Resolution);
 	}
@@ -148,42 +143,34 @@ public partial class Chunk : Node3D
 	{
 		return (Vector3)aVoxelPos * Size / Resolution + Position;
 	}
-	private IEnumerable<(Vector3I, Voxel)> AllVoxels()
-	{
-		foreach (Vector3I vPos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
-		{
-			yield return (vPos, myVoxels[vPos.X, vPos.Y, vPos.Z]);
-		}
-	}
 
-    public IEnumerable<(Vector3I, Voxel)> AffectedVoxels(Aabb aArea)
+    public IEnumerable<Vector3I> AffectedNodes(Aabb aArea)
     {
         Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(Size, Size, Size)));
 
-        foreach (Vector3I vPos in Utils.Every(
-            VoxelPosFromWorldPos(affected.Position),
-            VoxelPosFromWorldPos(affected.End) - new Vector3I(1, 1, 1)))
-        {
-            yield return (vPos, myVoxels[vPos.X, vPos.Y, vPos.Z]);
-        }
+		return Utils.Every(
+			NodePosFromWorldPos(affected.Position),
+			NodePosFromWorldPos(affected.End) - new Vector3I(1, 1, 1));
     }
 
-	public Voxel VoxelAt(Vector3I aPos)
-	{
-		Vector3I offset = Utils.TruncatedDivision(aPos, new Vector3I(Resolution, Resolution, Resolution));
-		Vector3I chunkPos = ChunkPos + offset;
-		Vector3I pos = aPos - offset * Resolution;
+public ref MaterialsList NodeAt(Vector3I aPos)
+{
+	Vector3I offset = Utils.TruncatedDivision(aPos, new Vector3I(Resolution, Resolution, Resolution));
+	Vector3I chunkPos = ChunkPos + offset;
+	Vector3I pos = aPos - offset * Resolution;
 
-		Chunk chunk = offset.Equals(Vector3I.Zero) ?
-							this : OwningTerrain.TryGetChunk(chunkPos);
+	Chunk chunk = offset.Equals(Vector3I.Zero) ?
+					this : OwningTerrain.TryGetChunk(chunkPos);
 
-		return chunk?.myVoxels[pos.X, pos.Y, pos.Z];
-	}
+	if (chunk == null)
+		return ref Unsafe.NullRef<MaterialsList>();
+
+	return ref chunk.myTerrainNodes[pos.X, pos.Y, pos.Z];
+}
 
 	// Adaptation of https://paulbourke.net/geometry/polygonise/
 	public void RegenerateMesh()
 	{
-		return;
 		// TODO: this looks very computeshader'y
 		float unit = 1.0f / Resolution;
 
@@ -230,23 +217,35 @@ public partial class Chunk : Node3D
 		public Vector3 Material;
 	}
 
-	private PointInfo PointOnEdge(Voxel[] voxels, int firstCorner, int secondCorner)
+	private PointInfo PointOnEdge(ref MaterialsList aFirstNode, ref MaterialsList aSecondNode, int firstCorner, int secondCorner)
 	{
-		Voxel a = voxels[firstCorner];
-		Voxel b = voxels[secondCorner];
 
-		float weight = Mathf.InverseLerp(a.Total, b.Total, SurfaceValue);
+		float weight = Mathf.InverseLerp(
+			MaterialInteractions.Total(ref aFirstNode),  
+			MaterialInteractions.Total(ref aSecondNode), 
+			SurfaceValue);
 
 		PointInfo info;
 
 		info.Position = Utils.Lerp(Corners[firstCorner], Corners[secondCorner], weight);
 
+		info.Material = Vector3.Zero;
 
-		info.Material = Vector3I.Zero;
 
-		info.Material += Colors.Dirt * Mathf.Lerp(a.Dirt, b.Dirt, weight);
-		info.Material += Colors.Coal * Mathf.Lerp(a.Dirt, b.Dirt, weight);
-		info.Material /= Mathf.Lerp(a.Total, b.Total, weight);
+		if (Unsafe.IsNullRef(ref aFirstNode) || Unsafe.IsNullRef(ref aSecondNode))
+			return info;
+
+
+        float colorTotal = 0;
+		foreach (MaterialGroups.ColorMapping mapping in MaterialGroups.Colored)
+		{
+			float amount = Mathf.Lerp(aFirstNode[mapping.Index], aSecondNode[mapping.Index], weight);
+
+            info.Material += mapping.Color * amount;
+			colorTotal += amount;
+        }
+
+		info.Material /= colorTotal;
 
 		return info;
 	}
@@ -257,41 +256,40 @@ public partial class Chunk : Node3D
 
 		Vector3 orig = (Vector3)aSubPosition * unit;
 
-		Voxel[] corners = {
-			VoxelAt(aSubPosition + Corners[0]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[1]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[2]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[3]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[4]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[5]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[6]) ?? NullVoxel,
-			VoxelAt(aSubPosition + Corners[7]) ?? NullVoxel
-		};
+		ref MaterialsList corner0 = ref NodeAt(aSubPosition + Corners[0]);
+		ref MaterialsList corner1 = ref NodeAt(aSubPosition + Corners[1]);
+		ref MaterialsList corner2 = ref NodeAt(aSubPosition + Corners[2]);
+		ref MaterialsList corner3 = ref NodeAt(aSubPosition + Corners[3]);
+		ref MaterialsList corner4 = ref NodeAt(aSubPosition + Corners[4]);
+		ref MaterialsList corner5 = ref NodeAt(aSubPosition + Corners[5]);
+		ref MaterialsList corner6 = ref NodeAt(aSubPosition + Corners[6]);
+		ref MaterialsList corner7 = ref NodeAt(aSubPosition + Corners[7]);
+
 
 		int index = 0;
-		if (!corners[0].Solid()) index += 1;
-		if (!corners[1].Solid()) index += 2;
-		if (!corners[2].Solid()) index += 4;
-		if (!corners[3].Solid()) index += 8;
-		if (!corners[4].Solid()) index += 16;
-		if (!corners[5].Solid()) index += 32;
-		if (!corners[6].Solid()) index += 64;
-		if (!corners[7].Solid()) index += 128;
+		if (!MaterialInteractions.Solid(ref corner0, SurfaceValue)) index += 1;
+		if (!MaterialInteractions.Solid(ref corner1, SurfaceValue)) index += 2;
+		if (!MaterialInteractions.Solid(ref corner2, SurfaceValue)) index += 4;
+		if (!MaterialInteractions.Solid(ref corner3, SurfaceValue)) index += 8;
+		if (!MaterialInteractions.Solid(ref corner4, SurfaceValue)) index += 16;
+		if (!MaterialInteractions.Solid(ref corner5, SurfaceValue)) index += 32;
+		if (!MaterialInteractions.Solid(ref corner6, SurfaceValue)) index += 64;
+		if (!MaterialInteractions.Solid(ref corner7, SurfaceValue)) index += 128;
 
 		PointInfo[] edges =
 		{
-			PointOnEdge(corners, 0, 1),
-			PointOnEdge(corners, 1, 2),
-			PointOnEdge(corners, 2, 3),
-			PointOnEdge(corners, 3, 0),
-			PointOnEdge(corners, 4, 5),
-			PointOnEdge(corners, 5, 6),
-			PointOnEdge(corners, 6, 7),
-			PointOnEdge(corners, 7, 4),
-			PointOnEdge(corners, 0, 4),
-			PointOnEdge(corners, 1, 5),
-			PointOnEdge(corners, 2, 6),
-			PointOnEdge(corners, 3, 7)
+			PointOnEdge(ref corner0, ref corner1, 0, 1),
+			PointOnEdge(ref corner1, ref corner2, 1, 2),
+			PointOnEdge(ref corner2, ref corner3, 2, 3),
+			PointOnEdge(ref corner3, ref corner0, 3, 0),
+			PointOnEdge(ref corner4, ref corner5, 4, 5),
+			PointOnEdge(ref corner5, ref corner6, 5, 6),
+			PointOnEdge(ref corner6, ref corner7, 6, 7),
+			PointOnEdge(ref corner7, ref corner4, 7, 4),
+			PointOnEdge(ref corner0, ref corner4, 0, 4),
+			PointOnEdge(ref corner1, ref corner5, 1, 5),
+			PointOnEdge(ref corner2, ref corner6, 2, 6),
+			PointOnEdge(ref corner3, ref corner7, 3, 7)
 		};
 				
 		for (int i = 0; TriTable[index, i] != -1; i += 3)
