@@ -37,6 +37,7 @@ public partial class PlayerController : CharacterBody3D
 
     private Vector3 myTargetVelocity = Vector3.Zero;
     private bool myIsSprinting = false;
+    private bool myIsHoldingObject = false; //Use func pls :)
 
     private PickupObject myHeldObject;
 
@@ -93,7 +94,13 @@ public partial class PlayerController : CharacterBody3D
         {
             Interact();
         }
-
+        if (Input.IsActionJustPressed("secondary_interact"))
+        {
+            if (IsHoldingObject())
+            {
+                DropHeldObject();
+            }
+        }
         if (direction != Vector3.Zero)
         {
             direction = direction.Normalized();
@@ -173,23 +180,17 @@ public partial class PlayerController : CharacterBody3D
 
     private void Interact()
     {
-        if (myHeldObject != null)
+        if (IsHoldingObject())
         {
-            DropHeldObject();
+            if (myHeldObject is Tool)
+            {
+                (myHeldObject as Tool).Use();
+            }
+
             return;
         }
 
-        Vector2 mousePos = GetViewport().GetMousePosition();
-
-        Vector3 origin = myCamera.ProjectRayOrigin(mousePos);
-
-        PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
-
-        rayParams.From = origin;
-        rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
-        rayParams.CollisionMask = 2; 
-
-        Dictionary intersection = GetWorld3D().DirectSpaceState.IntersectRay(rayParams); //https://github.com/godotengine/godot-docs-user-notes/discussions/100#discussioncomment-10655180 Probs won't matter tho
+        Dictionary intersection = DoRayCast(2);
 
         if (intersection.Count == 0) // Empty dictionary means no collision
         {
@@ -200,14 +201,10 @@ public partial class PlayerController : CharacterBody3D
         {
             PickUpObj(intersection);
         }
-        else
-        {
-            Mine(intersection);
-        }
 
     }
 
-    private void Mine(Dictionary anIntersection)
+    public void Mine(Dictionary anIntersection)
     {
         Vector3 pos = ((Vector3)anIntersection["position"]);
 
@@ -216,6 +213,7 @@ public partial class PlayerController : CharacterBody3D
         myTerrainGenerator.Touch(area);
 
         float dist;
+        float amount;
 
         foreach (Chunk chunk in myTerrainGenerator.AffectedChunks(area))
         {
@@ -228,7 +226,7 @@ public partial class PlayerController : CharacterBody3D
                     continue;
                 }
 
-                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), voxel.myDirt);
+                amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), voxel.myDirt);
 
                 voxel.myDirt -= amount;
             }
@@ -244,20 +242,41 @@ public partial class PlayerController : CharacterBody3D
         objToPickUp.PickUp(this);
 
         myHeldObject = objToPickUp;
+
+        myIsHoldingObject = true;
     }
 
     private void DropHeldObject()
     {
-        if (myHeldObject != null)
+        if (IsHoldingObject())
         {
             myHeldObject.Drop();
-
-            myHeldObject = null;
         }
 
+        myIsHoldingObject = false;
+    }
+
+    public Dictionary DoRayCast(uint aCollisionMask)
+    {
+        Vector2 mousePos = GetViewport().GetMousePosition();
+
+        Vector3 origin = myCamera.ProjectRayOrigin(mousePos);
+
+        PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
+
+        rayParams.From = origin;
+        rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
+        rayParams.CollisionMask = aCollisionMask;
+
+        return GetWorld3D().DirectSpaceState.IntersectRay(rayParams); //https://github.com/godotengine/godot-docs-user-notes/discussions/100#discussioncomment-10655180 Probs won't matter tho
     }
 
     private void HandleCollision()
     {
+    }
+
+    public bool IsHoldingObject()
+    {
+        return (myHeldObject != null && myIsHoldingObject == true);
     }
 }

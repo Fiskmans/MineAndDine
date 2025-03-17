@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="2_qoadf"]
 [ext_resource type="Script" uid="uid://dpw2piduv22rk" path="res://TerrainGenerator.cs" id="3_wcmku"]
 [ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
-[ext_resource type="Script" uid="uid://bor2v4duflavf" path="res://PickupObject.cs" id="5_uq1df"]
+[ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://Shovel.cs" id="6_1tp12"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_uq1df"]
 
@@ -109,13 +109,13 @@ material_override = SubResource("StandardMaterial3D_clnj1")
 mesh = SubResource("BoxMesh_lmc21")
 skeleton = NodePath("")
 
-[node name="pickUp" type="RigidBody3D" parent="."]
+[node name="shovel" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55107, 4.90979)
-script = ExtResource("5_uq1df")
+script = ExtResource("6_1tp12")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="pickUp"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="shovel"]
 mesh = SubResource("BoxMesh_1tp12")
 surface_material_override/0 = SubResource("StandardMaterial3D_uq1df")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="pickUp"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="shovel"]
 shape = SubResource("BoxShape3D_uq1df")
