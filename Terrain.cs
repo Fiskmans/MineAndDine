@@ -1,64 +1,91 @@
 using Godot;
 using MineAndDine;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using static Godot.TabContainer;
+using System.Threading;
 
 
-public partial class TerrainGenerator : Node3D
+public partial class Terrain : Node3D
 {
 	[Export]
 	public float myChunkSize = 16;
 
-	Dictionary<Vector3I, Chunk> myLoadedChunks = new Dictionary<Vector3I, Chunk>();
-
     [Export]
     PackedScene myChunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
+
+	[Export]
+	public int myThreads = 4;
+
+    public static Terrain ourInstance { get; private set; } = null;
+
+	ConcurrentDictionary<Vector3I, Chunk> myChunks = new ConcurrentDictionary<Vector3I, Chunk>();
 
 	public delegate void ChunkedChangeHandler(Chunk aChunk);
 
 	public event ChunkedChangeHandler OnChunkChange;
 
-    HashSet<Chunk> myModifiedChunks = new HashSet<Chunk>();
-    HashSet<Chunk> myModifiedChunkBuffer = new HashSet<Chunk>();
-    HashSet<Chunk> myChunksToRemesh = new HashSet<Chunk>();
+	List<Thread> myWorkerThreads = new List<Thread>();
+
+    ConcurrentQueue<Chunk> myModifiedChunks = new ConcurrentQueue<Chunk>();
+    ConcurrentQueue<Chunk> myChunksToRemesh = new ConcurrentQueue<Chunk>();
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		if (ourInstance != null) throw new Exception("Multiple terrains added to world");
+
+		ourInstance = this;
+
+		for (int i = 0;	i < myThreads; i++)
+            myWorkerThreads.Add(new Thread(DoTerrainUpdates));
+
+		foreach (Thread thread in myWorkerThreads)
+			thread.Start();
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
     {
-		HashSet<Chunk> chunks = new HashSet<Chunk>(myModifiedChunks);
-        myModifiedChunks.Clear();
+    }
 
-        foreach (Chunk c in chunks)
+	private void DoTerrainUpdates()
+	{
+		while (true) // TODO, prolly clean this thread up lol
 		{
-			c.Update();
-			OnChunkChange?.Invoke(c);
-        }
+			Chunk chunk = null;
+			bool yield = true;
 
-        foreach (Chunk chunk in myChunksToRemesh)
-        {
-            chunk.RegenerateMesh();
-        }
+            if (myModifiedChunks.TryDequeue(out chunk))
+            {
+				yield = false;
+                chunk.Update();
+                OnChunkChange?.Invoke(chunk);
+            }
 
-        myChunksToRemesh.Clear();
+			if (myChunksToRemesh.TryDequeue(out chunk))
+			{
+				yield = false;
+				chunk.RegenerateMesh();
+			}
+
+			if (yield)	
+	            Thread.Yield();
+        }
     }
 
     public void RegisterModification(Chunk aChunk)
 	{
-		myModifiedChunks.Add(aChunk);
+		myModifiedChunks.Enqueue(aChunk);
 
 		foreach(Vector3I pos in Utils.Every(aChunk.myChunkPos - new Vector3I(1,1,1), aChunk.myChunkPos))
         {
             Chunk c = TryGetChunk(pos);
+			if (c == null)
+				continue;
 
-            if (c != null)
-                myChunksToRemesh.Add(c);
+			c.MarkDirty();
+            myChunksToRemesh.Enqueue(c);
         }
 	}
 
@@ -83,7 +110,8 @@ public partial class TerrainGenerator : Node3D
 	public Chunk TryGetChunk(Vector3I aChunkPos)
 	{
 		Chunk c = null;
-		myLoadedChunks.TryGetValue(aChunkPos, out c);
+		if (!myChunks.TryGetValue(aChunkPos, out c))
+			c = null;
 		return c;
     }
 
@@ -93,7 +121,7 @@ public partial class TerrainGenerator : Node3D
         {
             Chunk res;
 
-            if (myLoadedChunks.TryGetValue(pos, out res))
+            if (myChunks.TryGetValue(pos, out res))
 			{
                 yield return res;
 			}
@@ -122,20 +150,17 @@ public partial class TerrainGenerator : Node3D
 	{
 		Chunk res;
 
-		if (myLoadedChunks.TryGetValue(aPosition, out res))
-		{
+		if (myChunks.TryGetValue(aPosition, out res))
 			return res;
-		}
 
 		res = (Chunk)myChunkScene.Instantiate();
 		res.myChunkPos = aPosition;
 		res.mySize = myChunkSize;
-		res.myOwningTerrain = this;
         res.Position = WorldPosFromChunkPos(aPosition);
 
-		myLoadedChunks.Add(aPosition, res);
-
 		AddChild(res);
+
+		myChunks.TryAdd(aPosition, res);
 
 		return res;
 	}

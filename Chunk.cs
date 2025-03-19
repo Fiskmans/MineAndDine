@@ -1,13 +1,16 @@
 using Godot;
+using Godot.Collections;
 using MineAndDine;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Xml.Linq;
 using static Godot.TextServer;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Array = Godot.Collections.Array;
 
 public partial class Chunk : Node3D
 {
@@ -19,7 +22,14 @@ public partial class Chunk : Node3D
 	[Export]
 	public Vector3I myChunkPos = new Vector3I(0, 0, 0);
 
-	public TerrainGenerator myOwningTerrain = null;
+	class MeshInfo
+	{
+		public List<Vector3> vertices;
+		public Array arrays;
+	}
+
+	private bool myIsDirty = true;
+	private MeshInfo myNewMesh = null;
 
 	ArrayMesh myMesh = new ArrayMesh();
 	ConcavePolygonShape3D myCollisionMesh;
@@ -27,10 +37,20 @@ public partial class Chunk : Node3D
 
 	public const float mySurfaceValue = 0.5f;
 
-	public ref struct NodeMapping
+	public struct NodeIndex
 	{
-		public Vector3I Position;
-		public ref MaterialsList Node;
+		public Chunk chunk;
+		public Vector3I index;
+
+		public ref MaterialsList Get()
+		{
+			return ref chunk.myTerrainNodes[index.X, index.Y, index.Z];
+		}
+
+		public bool InBounds()
+		{
+			return chunk != null;
+		}
 	}
 
 	// blame the source for weird order
@@ -63,7 +83,7 @@ public partial class Chunk : Node3D
 				{
 					float amount = 1.0f - y / (float)myResolution - 2;
 
-					amount -= myChunkPos.Y * 1.0f;
+					amount -= myChunkPos.Y * 0.5f;
 					amount += myChunkPos.X * 0.05f;
 					amount += myChunkPos.Z * -0.1f;
 					amount += GD.Randf() * 0.03f;
@@ -88,25 +108,48 @@ public partial class Chunk : Node3D
 		myCollisionMesh = new ConcavePolygonShape3D();
 		GetNode<CollisionShape3D>("Collision/CollisionMesh").Shape = myCollisionMesh;
 
-		myOwningTerrain.RegisterModification(this);
+		Terrain.ourInstance.RegisterModification(this);
 	}
 
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
+    {
+        if (myNewMesh != null)
+        {
+            MeshInfo info = Interlocked.Exchange(ref myNewMesh, null);
+
+            myMesh.ClearSurfaces();
+            long flags = 0;
+
+            flags |= (long)Mesh.ArrayCustomFormat.RgbFloat << (int)Mesh.ArrayFormat.FormatCustom0Shift;
+
+
+            if (info.vertices.Count > 0)
+            {
+                myMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, info.arrays, null, null, (Mesh.ArrayFormat)flags);
+                myMesh.SurfaceSetMaterial(0, myMaterial);
+            }
+
+            myCollisionMesh.SetFaces(info.vertices.ToArray());
+        }
+    }
+
+    public void MarkDirty()
 	{
+		myIsDirty = true;
 	}
 
 	private bool Simulate(Vector3I aNodePos)
 	{
 		bool modified = false;
 
-		ref MaterialsList node = ref NodeAt(aNodePos);
-		ref MaterialsList below = ref NodeAt(aNodePos + Vector3I.Down);
+		NodeIndex node = NodeAt(aNodePos);
+		NodeIndex below = NodeAt(aNodePos + Vector3I.Down);
 		
-		if (!Unsafe.IsNullRef(ref below))
+		if (below.InBounds())
 		{
-			if (MaterialInteractions.MoveLoose(ref node, ref below, 1))
+			if (MaterialInteractions.MoveLoose(ref node.Get(), ref below.Get(), 1))
 				modified = true;
 		}
 
@@ -124,7 +167,7 @@ public partial class Chunk : Node3D
 		}
 
 		if (modified)
-			myOwningTerrain.RegisterModification(this);
+			Terrain.ourInstance.RegisterModification(this);
 	}
 
 	public Vector3I NodePosFromWorldPos(Vector3 aPos)
@@ -146,24 +189,23 @@ public partial class Chunk : Node3D
 			NodePosFromWorldPos(affected.End) - new Vector3I(1, 1, 1));
     }
 
-public ref MaterialsList NodeAt(Vector3I aPos)
-{
-	Vector3I offset = Utils.TruncatedDivision(aPos, new Vector3I(myResolution, myResolution, myResolution));
-	Vector3I chunkPos = myChunkPos + offset;
-	Vector3I pos = aPos - offset * myResolution;
+	public NodeIndex NodeAt(Vector3I aPos)
+    {
+        Vector3I chunkOffset = Utils.TruncatedDivision(aPos, new Vector3I(myResolution, myResolution, myResolution));
 
-	Chunk chunk = offset.Equals(Vector3I.Zero) ?
-					this : myOwningTerrain.TryGetChunk(chunkPos);
+		return new NodeIndex
+		{
+			chunk = chunkOffset.Equals(Vector3I.Zero) ? this : Terrain.ourInstance.TryGetChunk(myChunkPos + chunkOffset),
+			index = aPos - chunkOffset * myResolution
+        };
+    }
 
-	if (chunk == null)
-		return ref Unsafe.NullRef<MaterialsList>();
-
-	return ref chunk.myTerrainNodes[pos.X, pos.Y, pos.Z];
-}
-
-	// Adaptation of https://paulbourke.net/geometry/polygonise/
-	public void RegenerateMesh()
+    // Adaptation of https://paulbourke.net/geometry/polygonise/
+    public void RegenerateMesh()
 	{
+		if (!myIsDirty)
+			return;
+
 		// TODO: this looks very computeshader'y
 		float unit = 1.0f / myResolution;
 
@@ -183,25 +225,15 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 		}
 
 		// Initialize the ArrayMesh.
-		var arrays = new Godot.Collections.Array();
+		var arrays = new Array();
 		arrays.Resize((int)Mesh.ArrayType.Max);
 		arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
 		arrays[(int)Mesh.ArrayType.Normal] = normals.ToArray();
 		arrays[(int)Mesh.ArrayType.Custom0] = materials.ToArray();
 
-		myMesh.ClearSurfaces();
-		long flags = 0;
+		Interlocked.Exchange(ref myNewMesh, new MeshInfo { vertices = vertices, arrays = arrays });
 
-		flags |= (long)Mesh.ArrayCustomFormat.RgbFloat << (int)Mesh.ArrayFormat.FormatCustom0Shift;
-
-
-		if (vertices.Count > 0)
-		{
-			myMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays, null, null, (Mesh.ArrayFormat)flags);
-			myMesh.SurfaceSetMaterial(0, myMaterial);
-		}
-
-		myCollisionMesh.SetFaces(vertices.ToArray());
+		myIsDirty = false;
 	}
 
 	struct PointInfo
@@ -210,29 +242,26 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 		public Vector3 Material;
 	}
 
-	private PointInfo PointOnEdge(ref MaterialsList aFirstNode, ref MaterialsList aSecondNode, int firstCorner, int secondCorner)
+	private PointInfo PointOnEdge(NodeIndex aFirstNode, NodeIndex aSecondNode, int firstCorner, int secondCorner)
 	{
+		PointInfo info = new PointInfo();
+
+		if (!aFirstNode.InBounds() || !aSecondNode.InBounds())
+			return info;
 
 		float weight = Mathf.InverseLerp(
-			MaterialInteractions.Total(ref aFirstNode),  
-			MaterialInteractions.Total(ref aSecondNode), 
+			MaterialInteractions.Total(ref aFirstNode.Get()),  
+			MaterialInteractions.Total(ref aSecondNode.Get()), 
 			mySurfaceValue);
-
-		PointInfo info;
 
 		info.Position = Utils.Lerp(ourCorners[firstCorner], ourCorners[secondCorner], weight);
 
-		info.Material = Vector3.Zero;
-
-
-		if (Unsafe.IsNullRef(ref aFirstNode) || Unsafe.IsNullRef(ref aSecondNode))
-			return info;
-
+        info.Material = Vector3.Zero;
 
         float colorTotal = 0;
 		foreach (MaterialGroups.ColorMapping mapping in MaterialGroups.Colored)
 		{
-			float amount = Mathf.Lerp(aFirstNode[mapping.Index], aSecondNode[mapping.Index], weight);
+			float amount = Mathf.Lerp(aFirstNode.Get()[mapping.Index], aSecondNode.Get()[mapping.Index], weight);
 
             info.Material += mapping.Color * amount;
 			colorTotal += amount;
@@ -249,40 +278,40 @@ public ref MaterialsList NodeAt(Vector3I aPos)
 
 		Vector3 orig = (Vector3)aSubPosition * unit;
 
-		ref MaterialsList corner0 = ref NodeAt(aSubPosition + ourCorners[0]);
-		ref MaterialsList corner1 = ref NodeAt(aSubPosition + ourCorners[1]);
-		ref MaterialsList corner2 = ref NodeAt(aSubPosition + ourCorners[2]);
-		ref MaterialsList corner3 = ref NodeAt(aSubPosition + ourCorners[3]);
-		ref MaterialsList corner4 = ref NodeAt(aSubPosition + ourCorners[4]);
-		ref MaterialsList corner5 = ref NodeAt(aSubPosition + ourCorners[5]);
-		ref MaterialsList corner6 = ref NodeAt(aSubPosition + ourCorners[6]);
-		ref MaterialsList corner7 = ref NodeAt(aSubPosition + ourCorners[7]);
+		NodeIndex corner0 = NodeAt(aSubPosition + ourCorners[0]);
+		NodeIndex corner1 = NodeAt(aSubPosition + ourCorners[1]);
+		NodeIndex corner2 = NodeAt(aSubPosition + ourCorners[2]);
+		NodeIndex corner3 = NodeAt(aSubPosition + ourCorners[3]);
+		NodeIndex corner4 = NodeAt(aSubPosition + ourCorners[4]);
+		NodeIndex corner5 = NodeAt(aSubPosition + ourCorners[5]);
+		NodeIndex corner6 = NodeAt(aSubPosition + ourCorners[6]);
+		NodeIndex corner7 = NodeAt(aSubPosition + ourCorners[7]);
 
 
 		int index = 0;
-		if (!MaterialInteractions.Solid(ref corner0, mySurfaceValue)) index += 1;
-		if (!MaterialInteractions.Solid(ref corner1, mySurfaceValue)) index += 2;
-		if (!MaterialInteractions.Solid(ref corner2, mySurfaceValue)) index += 4;
-		if (!MaterialInteractions.Solid(ref corner3, mySurfaceValue)) index += 8;
-		if (!MaterialInteractions.Solid(ref corner4, mySurfaceValue)) index += 16;
-		if (!MaterialInteractions.Solid(ref corner5, mySurfaceValue)) index += 32;
-		if (!MaterialInteractions.Solid(ref corner6, mySurfaceValue)) index += 64;
-		if (!MaterialInteractions.Solid(ref corner7, mySurfaceValue)) index += 128;
+		if (corner0.InBounds() && !MaterialInteractions.Solid(ref corner0.Get(), mySurfaceValue)) index += 1;
+		if (corner1.InBounds() && !MaterialInteractions.Solid(ref corner1.Get(), mySurfaceValue)) index += 2;
+		if (corner2.InBounds() && !MaterialInteractions.Solid(ref corner2.Get(), mySurfaceValue)) index += 4;
+		if (corner3.InBounds() && !MaterialInteractions.Solid(ref corner3.Get(), mySurfaceValue)) index += 8;
+		if (corner4.InBounds() && !MaterialInteractions.Solid(ref corner4.Get(), mySurfaceValue)) index += 16;
+		if (corner5.InBounds() && !MaterialInteractions.Solid(ref corner5.Get(), mySurfaceValue)) index += 32;
+		if (corner6.InBounds() && !MaterialInteractions.Solid(ref corner6.Get(), mySurfaceValue)) index += 64;
+		if (corner7.InBounds() && !MaterialInteractions.Solid(ref corner7.Get(), mySurfaceValue)) index += 128;
 
 		PointInfo[] edges =
 		{
-			PointOnEdge(ref corner0, ref corner1, 0, 1),
-			PointOnEdge(ref corner1, ref corner2, 1, 2),
-			PointOnEdge(ref corner2, ref corner3, 2, 3),
-			PointOnEdge(ref corner3, ref corner0, 3, 0),
-			PointOnEdge(ref corner4, ref corner5, 4, 5),
-			PointOnEdge(ref corner5, ref corner6, 5, 6),
-			PointOnEdge(ref corner6, ref corner7, 6, 7),
-			PointOnEdge(ref corner7, ref corner4, 7, 4),
-			PointOnEdge(ref corner0, ref corner4, 0, 4),
-			PointOnEdge(ref corner1, ref corner5, 1, 5),
-			PointOnEdge(ref corner2, ref corner6, 2, 6),
-			PointOnEdge(ref corner3, ref corner7, 3, 7)
+			PointOnEdge(corner0, corner1, 0, 1),
+			PointOnEdge(corner1, corner2, 1, 2),
+			PointOnEdge(corner2, corner3, 2, 3),
+			PointOnEdge(corner3, corner0, 3, 0),
+			PointOnEdge(corner4, corner5, 4, 5),
+			PointOnEdge(corner5, corner6, 5, 6),
+			PointOnEdge(corner6, corner7, 6, 7),
+			PointOnEdge(corner7, corner4, 7, 4),
+			PointOnEdge(corner0, corner4, 0, 4),
+			PointOnEdge(corner1, corner5, 1, 5),
+			PointOnEdge(corner2, corner6, 2, 6),
+			PointOnEdge(corner3, corner7, 3, 7)
 		};
 				
 		for (int i = 0; ourTriTable[index, i] != -1; i += 3)

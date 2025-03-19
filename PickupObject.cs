@@ -9,7 +9,7 @@ namespace MineAndDine
 {
     internal partial class PickupObject : RigidBody3D
     {
-        private PlayerController myHeldByPlayer;
+        protected PlayerController myHeldByPlayer;
 
         public override void _Ready()
         {

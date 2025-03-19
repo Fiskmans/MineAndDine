@@ -3,9 +3,9 @@
 [ext_resource type="Texture2D" uid="uid://diwcvuml5m7fa" path="res://icon.svg" id="1_1tp12"]
 [ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="2_m5ruq"]
 [ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="2_qoadf"]
-[ext_resource type="Script" uid="uid://dpw2piduv22rk" path="res://TerrainGenerator.cs" id="3_wcmku"]
+[ext_resource type="Script" uid="uid://didpr6lmh12vs" path="res://Terrain.cs" id="4_1tp12"]
 [ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
-[ext_resource type="Script" uid="uid://bor2v4duflavf" path="res://PickupObject.cs" id="5_uq1df"]
+[ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://Shovel.cs" id="6_1tp12"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_uq1df"]
 
@@ -97,7 +97,7 @@ shape = SubResource("CapsuleShape3D_fq6ae")
 
 [node name="Terrain" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
-script = ExtResource("3_wcmku")
+script = ExtResource("4_1tp12")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_6m1a7")
@@ -108,13 +108,13 @@ material_override = SubResource("StandardMaterial3D_clnj1")
 mesh = SubResource("BoxMesh_lmc21")
 skeleton = NodePath("")
 
-[node name="pickUp" type="RigidBody3D" parent="."]
+[node name="shovel" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55107, 4.90979)
-script = ExtResource("5_uq1df")
+script = ExtResource("6_1tp12")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="pickUp"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="shovel"]
 mesh = SubResource("BoxMesh_1tp12")
 surface_material_override/0 = SubResource("StandardMaterial3D_uq1df")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="pickUp"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="shovel"]
 shape = SubResource("BoxShape3D_uq1df")

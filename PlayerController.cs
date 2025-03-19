@@ -20,10 +20,6 @@ public partial class PlayerController : CharacterBody3D
 
     [Export]
     public float myReach { get; set; } = 16;
-    [Export]
-    public float myMiningRadius { get; set; } = 5;
-    [Export]
-    public float myMiningPower { get; set; } = 1;
 
     [Export(PropertyHint.Range, "0.f,1.f,0.01f")]
     float myCameraSensitivity = 0.01f;
@@ -32,11 +28,11 @@ public partial class PlayerController : CharacterBody3D
 
     private Camera3D myCamera;
     private Node3D myCameraPivot;
-    private TerrainGenerator myTerrainGenerator;
     public Node3D myHand { get; private set; }
 
     private Vector3 myTargetVelocity = Vector3.Zero;
     private bool myIsSprinting = false;
+    private bool myIsHoldingObject = false; //Use func pls :)
 
     private PickupObject myHeldObject;
 
@@ -45,7 +41,6 @@ public partial class PlayerController : CharacterBody3D
     {
         myCameraPivot = GetNode<Node3D>("cameraPivot"); //Spawn this stuff instead?
         myCamera = GetNode<Camera3D>("cameraPivot/cameraArm/playerCamera");
-        myTerrainGenerator = GetParent().GetNode<TerrainGenerator>("Terrain");
 
         myHand = GetNode<Node3D>("meshPivot/hand");
 
@@ -55,7 +50,7 @@ public partial class PlayerController : CharacterBody3D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        myTerrainGenerator.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20, 20, 20)));
+        Terrain.ourInstance.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20, 20, 20)));
     }
 
 	public override void _PhysicsProcess(double delta)
@@ -64,7 +59,7 @@ public partial class PlayerController : CharacterBody3D
             Interact((float)delta);
 
         if (Input.IsActionJustPressed("secondary_interact"))
-            SecondaryInteract();
+            DropHeldObject();
 
         Vector3 direction = HandleMovementInput();
         ApplyMovement(delta, direction);
@@ -181,61 +176,28 @@ public partial class PlayerController : CharacterBody3D
 
 	private void Interact(float aDeltaTime)
     {
-        if (myHeldObject != null)
+        if (IsHoldingObject())
         {
-            DropHeldObject();
+            if (myHeldObject is Tool)
+            {
+                (myHeldObject as Tool).Use();
+            }
+
             return;
         }
 
-        Dictionary intersect = RaycastMouse();
+        Dictionary intersection = DoRayCast(2);
 
-        if (intersect.Count == 0) // Empty dictionary means no collision
+        if (intersection.Count == 0) // Empty dictionary means no collision
+        {
             return;
-
-            
-
-        if (intersect["collider"].Obj is PickupObject)
-        {
-            PickUpObj(intersect);
-        }
-        else
-        {
-            Mine(intersect);
         }
 
-    }
-
-    private void SecondaryInteract()
-	{
-        Dictionary intersect = RaycastMouse();
-
-        if (intersect.Count == 0) // Empty dictionary means no collision
-            return;
-
-        Vector3 pos = (Vector3)intersect["position"];
-
-        Aabb area = new Aabb(pos - new Vector3(myMiningRadius, myMiningRadius, myMiningRadius), new Vector3(myMiningRadius, myMiningRadius, myMiningRadius) * 2);
-
-        foreach (Chunk chunk in myTerrainGenerator.AffectedChunks(area))
+        if (intersection["collider"].Obj is PickupObject)
         {
-            chunk.Update();
+            PickUpObj(intersection);
         }
-    }
 
-    private Dictionary RaycastMouse()
-    {
-        Vector2 mousePos = GetViewport().GetMousePosition();
-
-		Vector3 origin = myCamera.ProjectRayOrigin(mousePos);
-
-        PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
-
-		rayParams.From = origin;
-		rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
-		rayParams.CollisionMask = 2;
-
-        Dictionary intersect = GetWorld3D().DirectSpaceState.IntersectRay(rayParams);
-        return intersect;
     }
 
     private void PickUpObj(Dictionary anIntersection)
@@ -245,50 +207,41 @@ public partial class PlayerController : CharacterBody3D
         objToPickUp.PickUp(this);
 
         myHeldObject = objToPickUp;
+
+        myIsHoldingObject = true;
     }
 
     private void DropHeldObject()
     {
-        if (myHeldObject != null)
+        if (IsHoldingObject())
         {
             myHeldObject.Drop();
-
-            myHeldObject = null;
         }
 
+        myIsHoldingObject = false;
     }
 
-    private void Mine(Dictionary anIntersection)
+    public Dictionary DoRayCast(uint aCollisionMask)
     {
-        Vector3 pos = ((Vector3)anIntersection["position"]);
+        Vector2 mousePos = GetViewport().GetMousePosition();
 
-        Aabb area = new Aabb(pos - new Vector3(myMiningRadius, myMiningRadius, myMiningRadius), new Vector3(myMiningRadius, myMiningRadius, myMiningRadius) * 2);
+        Vector3 origin = myCamera.ProjectRayOrigin(mousePos);
 
-        myTerrainGenerator.Touch(area);
+        PhysicsRayQueryParameters3D rayParams = new PhysicsRayQueryParameters3D();
 
-        foreach (Chunk chunk in myTerrainGenerator.AffectedChunks(area))
-        {
-            foreach (Vector3I nodePos in chunk.AffectedNodes(area))
-            {
-                float dist = pos.DistanceTo(chunk.WorldPosFromVoxelPos(nodePos));
+        rayParams.From = origin;
+        rayParams.To = origin + myCamera.ProjectRayNormal(mousePos) * myReach;
+        rayParams.CollisionMask = aCollisionMask;
 
-                if (dist >= myMiningRadius)
-                        continue;
-        
-                ref MaterialsList node = ref chunk.NodeAt(nodePos);
-        
-                float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), node[(int)MaterialType.Dirt]);
-
-                node[(int)MaterialType.Dirt] -= amount;
-            }
-   
-
-            chunk.Update();
-            myTerrainGenerator.RegisterModification(chunk);
-        }
+        return GetWorld3D().DirectSpaceState.IntersectRay(rayParams); //https://github.com/godotengine/godot-docs-user-notes/discussions/100#discussioncomment-10655180 Probs won't matter tho
     }
 
 	private void HandleCollision()
 	{
 	}
+
+    public bool IsHoldingObject()
+    {
+        return (myHeldObject != null && myIsHoldingObject == true);
+    }
 }
