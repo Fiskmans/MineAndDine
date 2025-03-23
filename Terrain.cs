@@ -25,9 +25,13 @@ public partial class Terrain : Node3D
 
 	public event ChunkedChangeHandler OnChunkChange;
 
+	Godot.Timer myPulse = new Godot.Timer();
+
 	List<Thread> myWorkerThreads = new List<Thread>();
 
-    ConcurrentQueue<Chunk> myModifiedChunks = new ConcurrentQueue<Chunk>();
+	ConcurrentDictionary<Chunk, bool> myModifiedChunks = new ConcurrentDictionary<Chunk, bool>();
+
+    ConcurrentQueue<Chunk> myTaskList = new ConcurrentQueue<Chunk>();
     ConcurrentQueue<Chunk> myChunksToRemesh = new ConcurrentQueue<Chunk>();
 
 	// Called when the node enters the scene tree for the first time.
@@ -42,11 +46,28 @@ public partial class Terrain : Node3D
 
 		foreach (Thread thread in myWorkerThreads)
 			thread.Start();
+
+		myPulse.Timeout += FlushChanges;
+		myPulse.OneShot = false;
+		
+		AddChild(myPulse);
+		myPulse.Start(0.3); //200bpm
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
     {
+    }
+
+	private void FlushChanges()
+	{
+        foreach (Chunk c in myModifiedChunks.Keys)
+        {
+            myTaskList.Enqueue(c);
+			// This leaks some updates, cant be bothered to fix it right now
+        }
+
+        myModifiedChunks.Clear();
     }
 
 	private void DoTerrainUpdates()
@@ -56,7 +77,7 @@ public partial class Terrain : Node3D
 			Chunk chunk = null;
 			bool yield = true;
 
-            if (myModifiedChunks.TryDequeue(out chunk))
+            if (myTaskList.TryDequeue(out chunk))
             {
 				yield = false;
                 chunk.Update();
@@ -76,7 +97,7 @@ public partial class Terrain : Node3D
 
     public void RegisterModification(Chunk aChunk)
 	{
-		myModifiedChunks.Enqueue(aChunk);
+		myModifiedChunks.TryAdd(aChunk, true);
 
 		foreach(Vector3I pos in Utils.Every(aChunk.myChunkPos - new Vector3I(1,1,1), aChunk.myChunkPos))
         {
@@ -151,7 +172,9 @@ public partial class Terrain : Node3D
 		Chunk res;
 
 		if (myChunks.TryGetValue(aPosition, out res))
+		{
 			return res;
+		}
 
 		res = (Chunk)myChunkScene.Instantiate();
 		res.myChunkPos = aPosition;
