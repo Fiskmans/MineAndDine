@@ -36,7 +36,7 @@ namespace MineandDine
                     Dictionary collision = myHeldByPlayer.DoRayCast(1);
                     if (collision.Count == 0) { return; }
 
-                    myPlacingGhost.Position = (Vector3)collision["position"];
+                    myPlacingGhost.Position = collision["position"].AsVector3().Snapped(Vector3.One);
                 }
             }
         }
