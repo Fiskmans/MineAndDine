@@ -1,11 +1,13 @@
-[gd_scene load_steps=18 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=21 format=3 uid="uid://mwujfi7brask"]
 
 [ext_resource type="Texture2D" uid="uid://diwcvuml5m7fa" path="res://icon.svg" id="1_1tp12"]
 [ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="2_m5ruq"]
 [ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="2_qoadf"]
 [ext_resource type="Script" uid="uid://didpr6lmh12vs" path="res://Terrain.cs" id="4_1tp12"]
 [ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="5_ly5bc"]
-[ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://Shovel.cs" id="6_1tp12"]
+[ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://PickupObject/Tool/Shovel.cs" id="6_1tp12"]
+[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://PickupObject/Placable.cs" id="7_42jam"]
+[ext_resource type="PackedScene" uid="uid://ct7y1w4dy2m66" path="res://Scenes/Fragments/Structures/Anchor.tscn" id="8_k5cj5"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_uq1df"]
 
@@ -40,10 +42,15 @@ albedo_color = Color(0.513726, 0.266667, 0.521569, 1)
 [sub_resource type="BoxShape3D" id="BoxShape3D_uq1df"]
 size = Vector3(1, 1, 1.01984)
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k5cj5"]
+radius = 0.125
+height = 1.0
+
 [node name="Main world" type="Node3D"]
 
 [node name="CharacterBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.71237, 0)
+wall_min_slide_angle = 0.523599
 script = ExtResource("2_m5ruq")
 
 [node name="cameraPivot" type="Node3D" parent="CharacterBody3D"]
@@ -118,3 +125,18 @@ surface_material_override/0 = SubResource("StandardMaterial3D_uq1df")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="shovel"]
 shape = SubResource("BoxShape3D_uq1df")
+
+[node name="Anchor" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75066, 3.09823, 0)
+script = ExtResource("7_42jam")
+myGhost = ExtResource("8_k5cj5")
+myPlaced = ExtResource("8_k5cj5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Anchor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.154978, 0)
+shape = SubResource("CapsuleShape3D_k5cj5")
+
+[node name="Anchor" parent="Anchor" instance=ExtResource("8_k5cj5")]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+
+[node name="Structures" type="Node3D" parent="."]
