@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MineAndDine
 {
-    internal partial class PickupObject : RigidBody3D
+    public partial class PickupObject : RigidBody3D
     {
         protected PlayerController myHeldByPlayer;
 
@@ -18,12 +18,10 @@ namespace MineAndDine
 
         public void PickUp(PlayerController aPlayer)
         {
-            if(GetParent() != null)
-            {
-                GetParent().RemoveChild(this);
-            }
+            GetParent()?.RemoveChild(this);
 
-            aPlayer.myHand.AddChild(this);
+            aPlayer.Hold(this);
+
             myHeldByPlayer = aPlayer;
 
             Freeze = true;
@@ -33,19 +31,23 @@ namespace MineAndDine
 
         public void Drop()
         {
-            if (myHeldByPlayer != null)
+            if (myHeldByPlayer == null)
             {
-                Vector3 pos = GlobalPosition;
-
-                myHeldByPlayer.myHand.RemoveChild(this);
-                myHeldByPlayer.AddSibling(this);
-
-                GlobalPosition = pos;
-                Freeze = false;
-                GetNode<CollisionShape3D>("CollisionShape3D").Disabled = false;
-
-                myHeldByPlayer = null;
+                return;
             }
+
+            Vector3 pos = GlobalPosition;
+
+            Node root = GetTree().Root;
+
+            GetParent()?.RemoveChild(this);
+            root.AddChild(this);
+            
+            GlobalPosition = pos;
+            Freeze = false;
+            GetNode<CollisionShape3D>("CollisionShape3D").Disabled = false;
+
+            myHeldByPlayer = null;
         }
     }
 }

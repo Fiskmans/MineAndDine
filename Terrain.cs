@@ -8,9 +8,6 @@ using System.Threading;
 
 public partial class Terrain : Node3D
 {
-	[Export]
-	public float myChunkSize = 16;
-
     [Export]
     PackedScene myChunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
 
@@ -99,7 +96,7 @@ public partial class Terrain : Node3D
 	{
 		myModifiedChunks.TryAdd(aChunk, true);
 
-		foreach(Vector3I pos in Utils.Every(aChunk.myChunkPos - new Vector3I(1,1,1), aChunk.myChunkPos))
+		foreach(Vector3I pos in Utils.Every(aChunk.ChunkIndex - new Vector3I(1,1,1), aChunk.ChunkIndex))
         {
             Chunk c = TryGetChunk(pos);
 			if (c == null)
@@ -110,35 +107,17 @@ public partial class Terrain : Node3D
         }
 	}
 
-	public Vector3I ChunkPosFromWorldPos(Vector3 aPosition)
-	{
-		return new Vector3I(
-			(int)(aPosition.X / myChunkSize),
-			(int)(aPosition.Y / myChunkSize),
-			(int)(aPosition.Z / myChunkSize));
-	}
-
-	private Vector3 WorldPosFromChunkPos(Vector3I aPosition)
-	{
-		return new Vector3
-		{
-			X = (int)(aPosition.X * myChunkSize),
-			Y = (int)(aPosition.Y * myChunkSize),
-			Z = (int)(aPosition.Z * myChunkSize)
-		};
-	}
-
-	public Chunk TryGetChunk(Vector3I aChunkPos)
+	public Chunk TryGetChunk(Vector3I aChunkIndex)
 	{
 		Chunk c = null;
-		if (!myChunks.TryGetValue(aChunkPos, out c))
+		if (!myChunks.TryGetValue(aChunkIndex, out c))
 			c = null;
 		return c;
     }
 
 	public IEnumerable<Chunk> AffectedChunks(Aabb aArea)
     {
-		foreach(Vector3I pos in Utils.Every(ChunkPosFromWorldPos(aArea.Position) - new Vector3I(1, 1, 1), ChunkPosFromWorldPos(aArea.End)))
+		foreach(Vector3I pos in Utils.Every(Chunk.IndexFromPos(aArea.Position) - new Vector3I(1, 1, 1), Chunk.IndexFromPos(aArea.End)))
         {
             Chunk res;
 
@@ -151,7 +130,7 @@ public partial class Terrain : Node3D
 
     public void Touch(Aabb aArea)
     {
-        Touch(Utils.Every(ChunkPosFromWorldPos(aArea.Position) - new Vector3I(1, 1, 1), ChunkPosFromWorldPos(aArea.End)));
+        Touch(Utils.Every(Chunk.IndexFromPos(aArea.Position) - new Vector3I(1, 1, 1), Chunk.IndexFromPos(aArea.End)));
     }
 
     public void Touch(IEnumerable<Vector3I> aChunkPositions)
@@ -167,23 +146,21 @@ public partial class Terrain : Node3D
 		ChunkAt(aChunkPos);
     }
 
-	public Chunk ChunkAt(Vector3I aPosition)
+	public Chunk ChunkAt(Vector3I aChunkIndex)
 	{
 		Chunk res;
 
-		if (myChunks.TryGetValue(aPosition, out res))
+		if (myChunks.TryGetValue(aChunkIndex, out res))
 		{
 			return res;
 		}
 
 		res = (Chunk)myChunkScene.Instantiate();
-		res.myChunkPos = aPosition;
-		res.mySize = myChunkSize;
-        res.Position = WorldPosFromChunkPos(aPosition);
+		res.ChunkIndex = aChunkIndex;
 
 		AddChild(res);
 
-		myChunks.TryAdd(aPosition, res);
+		myChunks.TryAdd(aChunkIndex, res);
 
 		return res;
 	}

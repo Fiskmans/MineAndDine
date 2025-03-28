@@ -72,7 +72,7 @@ namespace MineAndDine
 
             Vector3 pos = ((Vector3)anIntersection["position"]);
 
-            Chunk chunk = Terrain.ourInstance.ChunkAt(Terrain.ourInstance.ChunkPosFromWorldPos(pos));
+            Chunk chunk = Terrain.ourInstance.ChunkAt(Chunk.IndexFromPos(pos));
             Chunk.NodeIndex node = chunk.NodeAt(chunk.NodePosFromWorldPos(pos));
 
             if (node.InBounds())

@@ -176,13 +176,9 @@ public partial class PlayerController : CharacterBody3D
 
 	private void Interact(float aDeltaTime)
     {
-        if (IsHoldingObject())
+        if (myHeldObject != null)
         {
-            if (myHeldObject is Tool)
-            {
-                (myHeldObject as Tool).Use();
-            }
-
+            (myHeldObject as Tool)?.Use();
             return;
         }
 
@@ -193,32 +189,23 @@ public partial class PlayerController : CharacterBody3D
             return;
         }
 
-        if (intersection["collider"].Obj is PickupObject)
-        {
-            PickUpObj(intersection);
-        }
+        object clicked = intersection["collider"].Obj;
 
+        (clicked as PickupObject)?.PickUp(this);
+        (clicked as Interactable)?.Activate();
     }
 
-    private void PickUpObj(Dictionary anIntersection)
+    public void Hold(PickupObject aObject)
     {
-        PickupObject objToPickUp = (PickupObject)anIntersection["collider"].Obj;
-
-        objToPickUp.PickUp(this);
-
-        myHeldObject = objToPickUp;
-
+        myHeldObject = aObject;
+        myHand.AddChild(aObject);
         myIsHoldingObject = true;
     }
 
     private void DropHeldObject()
     {
-        if (IsHoldingObject())
-        {
-            myHeldObject.Drop();
-        }
-
-        myIsHoldingObject = false;
+        myHeldObject?.Drop();
+        myHeldObject = null;
     }
 
     public Dictionary DoRayCast(uint aCollisionMask)
@@ -239,9 +226,4 @@ public partial class PlayerController : CharacterBody3D
 	private void HandleCollision()
 	{
 	}
-
-    public bool IsHoldingObject()
-    {
-        return (myHeldObject != null && myIsHoldingObject == true);
-    }
 }

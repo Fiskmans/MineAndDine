@@ -16,13 +16,23 @@ using Array = Godot.Collections.Array;
 
 public partial class Chunk : Node3D
 {
-	[Export]
-	public int myResolution { get; set; } = 16;
+	public static readonly float Size = 16;
+	public static readonly int Resolution = 16;
+	public static readonly int NodeVolume = 1;
 
-	public float mySize = 1;
-
-	[Export]
-	public Vector3I myChunkPos = new Vector3I(0, 0, 0);
+	private Vector3I _ChunkIndex;
+	public Vector3I ChunkIndex 
+	{
+		get 
+		{
+			return _ChunkIndex;
+		}
+		set
+		{
+			_ChunkIndex = value;
+			Position = PosFromIndex(value);
+        }
+	}
 
 	class MeshInfo
 	{
@@ -49,6 +59,11 @@ public partial class Chunk : Node3D
 			return ref chunk.myTerrainNodes[index.X, index.Y, index.Z];
 		}
 
+		public NodeIndex Offset(Vector3I aOffset)
+		{
+			return chunk.NodeAt(index + aOffset);
+		}
+
 		public bool InBounds()
 		{
 			return chunk != null;
@@ -62,19 +77,19 @@ public partial class Chunk : Node3D
 	{
 		GD.Randomize();
 
-        myTerrainNodes = new MaterialsList[myResolution, myResolution, myResolution];
+        myTerrainNodes = new MaterialsList[Resolution, Resolution, Resolution];
 
-		for (int x = 0; x < myResolution; x++)
+		for (int x = 0; x < Resolution; x++)
 		{
-			for (int y = 0; y < myResolution; y++)
+			for (int y = 0; y < Resolution; y++)
 			{
-				for (int z = 0; z < myResolution; z++)
+				for (int z = 0; z < Resolution; z++)
 				{
 					float amount = 0.0f;
 
-					amount -= (myChunkPos.Y + y / (float)myResolution) * 1.5f;
-					amount += myChunkPos.X * 0.05f;
-					amount += myChunkPos.Z * -0.1f;
+					amount -= (ChunkIndex.Y + y / (float)Resolution) * 1.5f;
+					amount += ChunkIndex.X * 0.05f;
+					amount += ChunkIndex.Z * -0.1f;
 					amount += GD.Randf() * 0.03f;
 
                     myTerrainNodes[x, y, z][(int)MaterialType.Dirt] = amount * 0.9f;
@@ -87,8 +102,8 @@ public partial class Chunk : Node3D
 
 		myMaterial = meshComp.Mesh.SurfaceGetMaterial(0).Duplicate() as ShaderMaterial;
 
-		myMaterial.SetShaderParameter("Size", mySize);
-		myMaterial.SetShaderParameter("Offset", myChunkPos);
+		myMaterial.SetShaderParameter("Size", Size);
+		myMaterial.SetShaderParameter("Offset", ChunkIndex);
 		myMaterial.SetShaderParameter("LightColor", new Vector3(0.8f, 0.7f, 0.5f));
 		myMaterial.SetShaderParameter("DarkColor", new Vector3(0.4f, 0.3f, 0.1f));
 
@@ -128,6 +143,24 @@ public partial class Chunk : Node3D
         }
     }
 
+    public static Vector3I IndexFromPos(Vector3 aPosition)
+    {
+        return new Vector3I(
+            (int)(aPosition.X / Size),
+            (int)(aPosition.Y / Size),
+            (int)(aPosition.Z / Size));
+    }
+
+    private static Vector3 PosFromIndex(Vector3I aPosition)
+    {
+        return new Vector3
+        {
+            X = (int)(aPosition.X * Size),
+            Y = (int)(aPosition.Y * Size),
+            Z = (int)(aPosition.Z * Size)
+        };
+    }
+
     public void MarkDirty()
 	{
 		myIsDirty = true;
@@ -142,7 +175,7 @@ public partial class Chunk : Node3D
 		
 		if (below.InBounds())
 		{
-			if (MaterialInteractions.MoveLoose(ref node.Get(), ref below.Get(), 1))
+			if (MaterialInteractions.MoveLoose(ref node.Get(), ref below.Get(), NodeVolume))
 				modified = true;
 		}
 
@@ -156,7 +189,7 @@ public partial class Chunk : Node3D
 		Stopwatch watch = new Stopwatch();
 		watch.Start();
 
-		foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(myResolution - 1, myResolution - 1, myResolution - 1)))
+		foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
 		{
 			if (Simulate(pos))
 				modified = true;
@@ -165,36 +198,48 @@ public partial class Chunk : Node3D
 		if (modified)
 			Terrain.ourInstance.RegisterModification(this);
 
-		GD.Print("Update ", myChunkPos, " took ", watch.ElapsedMilliseconds, "ms");
+		GD.Print("Update ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms");
 	}
 
 	public Vector3I NodePosFromWorldPos(Vector3 aPos)
 	{
-		return (Vector3I)((aPos - Position) / mySize * myResolution);
+		return (Vector3I)((aPos - Position) / Size * Resolution);
 	}
 
 	public Vector3 WorldPosFromVoxelPos(Vector3I aVoxelPos)
 	{
-		return (Vector3)aVoxelPos * mySize / myResolution + Position;
+		return (Vector3)aVoxelPos * Size / Resolution + Position;
 	}
 
     public IEnumerable<Vector3I> AffectedNodes(Aabb aArea)
     {
-        Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(mySize, mySize, mySize)));
+        Aabb affected = aArea.Intersection(new Aabb(Position, new Vector3(Size, Size, Size)));
 
 		return Utils.Every(
 			NodePosFromWorldPos(affected.Position),
 			NodePosFromWorldPos(affected.End) - new Vector3I(1, 1, 1));
     }
 
-	public NodeIndex NodeAt(Vector3I aPos)
+	public static NodeIndex NodeAt(Vector3 aWorldPos)
+	{
+		Chunk c = Terrain.ourInstance.TryGetChunk(Vector3I.Zero); // TODO this is jank
+
+		if (c == null)
+		{
+			return new NodeIndex { chunk = null };
+		}
+
+		return c.NodeAt(c.NodePosFromWorldPos(aWorldPos));
+	}
+
+	public NodeIndex NodeAt(Vector3I aIndex)
     {
-        Vector3I chunkOffset = Utils.TruncatedDivision(aPos, new Vector3I(myResolution, myResolution, myResolution));
+        Vector3I chunkOffset = Utils.TruncatedDivision(aIndex, new Vector3I(Resolution, Resolution, Resolution));
 
 		return new NodeIndex
 		{
-			chunk = chunkOffset.Equals(Vector3I.Zero) ? this : Terrain.ourInstance.TryGetChunk(myChunkPos + chunkOffset),
-			index = aPos - chunkOffset * myResolution
+			chunk = chunkOffset.Equals(Vector3I.Zero) ? this : Terrain.ourInstance.TryGetChunk(ChunkIndex + chunkOffset),
+			index = aIndex - chunkOffset * Resolution
         };
     }
 
@@ -207,13 +252,13 @@ public partial class Chunk : Node3D
 		Stopwatch watch = new Stopwatch();
 		watch.Start();
 
-		float[,,] values = new float[myResolution + 1, myResolution + 1, myResolution + 1];
+		float[,,] values = new float[Resolution + 1, Resolution + 1, Resolution + 1];
 
-		for (int x = 0;	x <= myResolution; x++)
+		for (int x = 0;	x <= Resolution; x++)
 		{
-			for (int y = 0;	y <= myResolution; y++)
+			for (int y = 0;	y <= Resolution; y++)
 			{
-				for (int z = 0;	z <= myResolution; z++)
+				for (int z = 0;	z <= Resolution; z++)
 				{
 					values[x, y, z] = 0.0f;
 				}
@@ -222,18 +267,18 @@ public partial class Chunk : Node3D
 
 		foreach(Vector3I chunkOffset in Utils.Every(Vector3I.Zero, Vector3I.One))
 		{
-			Chunk c = Terrain.ourInstance.TryGetChunk(myChunkPos + chunkOffset);
+			Chunk c = Terrain.ourInstance.TryGetChunk(ChunkIndex + chunkOffset);
 
 			if (c == null)
 			{
 				continue;
 			}
 
-			Vector3I end = (Vector3I.One - chunkOffset) * (myResolution - 1);
+			Vector3I end = (Vector3I.One - chunkOffset) * (Resolution - 1);
 
             foreach (Vector3I pos in Utils.Every(Vector3I.Zero, end))
             {
-				Vector3I at = pos + chunkOffset * myResolution;
+				Vector3I at = pos + chunkOffset * Resolution;
                 values[at.X,at.Y,at.Z] = MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
             }
         }
@@ -255,7 +300,7 @@ public partial class Chunk : Node3D
 
 		myIsDirty = false;
 
-		GD.Print("Remesh ", myChunkPos, " took ", watch.ElapsedMilliseconds, "ms ");
+		GD.Print("Remesh ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms ");
 	}
 
 	List<Vector3> CalculateNormals(List<Vector3> aVerticies)

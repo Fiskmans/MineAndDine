@@ -1,0 +1,56 @@
+[gd_scene load_steps=10 format=3 uid="uid://cc0hbs1f2wa2l"]
+
+[ext_resource type="PackedScene" uid="uid://v1dt8tn35qa6" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Crate.gltf" id="1_ib5yg"]
+[ext_resource type="Script" uid="uid://ps0e5s5pglhj" path="res://Scenes/Fragments/Structures/ArchimedianScrew.cs" id="1_y438l"]
+[ext_resource type="PackedScene" uid="uid://cctd5gvhx226g" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Brick1.gltf" id="2_5gd00"]
+[ext_resource type="PackedScene" uid="uid://de6sgxry66ygh" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Brick2.gltf" id="3_y438l"]
+[ext_resource type="PackedScene" uid="uid://cqbrvhi56021q" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Brick3.gltf" id="4_n1iom"]
+[ext_resource type="PackedScene" uid="uid://ooaryjgrxhxc" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Corner_ExteriorWide_Brick.gltf" id="5_lb7t6"]
+[ext_resource type="Script" uid="uid://bstfdgenwaiqm" path="res://Interactable.cs" id="7_n1iom"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lb7t6"]
+size = Vector3(0.4, 0.2, 0.4)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_s32je"]
+
+[node name="ArchimedianScrew" type="Node3D"]
+script = ExtResource("1_y438l")
+
+[node name="Prop_Crate2" parent="." instance=ExtResource("1_ib5yg")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+
+[node name="Prop_Brick12" parent="." instance=ExtResource("2_5gd00")]
+transform = Transform3D(0.734524, 0, 0.678583, 0, 1, 0, -0.678583, 0, 0.734524, 0.311202, 0, -0.0278081)
+
+[node name="Prop_Brick22" parent="." instance=ExtResource("3_y438l")]
+transform = Transform3D(0.883422, 0, 0.468578, 0, 1, 0, -0.468578, 0, 0.883422, 0.0441213, 0, 0.34776)
+
+[node name="Prop_Brick13" parent="." instance=ExtResource("2_5gd00")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.175692, 0, -0.248572)
+
+[node name="Prop_Brick32" parent="." instance=ExtResource("4_n1iom")]
+transform = Transform3D(0.853296, 0, 0.521427, 0, 1, 0, -0.521427, 0, 0.853296, -0.190218, 0, -0.269067)
+
+[node name="Prop_Brick14" parent="." instance=ExtResource("2_5gd00")]
+transform = Transform3D(0.278472, 0, -0.960445, 0, 1, 0, 0.960445, 0, 0.278472, -0.305043, 0, 0.181115)
+
+[node name="ScrewRoot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.715912, 0.69819, 0, -0.69819, -0.715912, 0, 0.787119, 0)
+
+[node name="Screw" parent="ScrewRoot" instance=ExtResource("5_lb7t6")]
+transform = Transform3D(0.4, 0, 0, 0, 2, 1.49012e-08, 0, -7.45058e-08, 0.4, 0, 0.681734, -0.331302)
+
+[node name="Handle" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.580193, 0)
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("7_n1iom")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Handle"]
+shape = SubResource("BoxShape3D_lb7t6")
+
+[node name="Dial" type="Node3D" parent="Handle"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Handle/Dial"]
+transform = Transform3D(0.1, 0, 0, 0, -8.74228e-09, -0.1, 0, 0.2, -4.37114e-09, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_s32je")
