@@ -2,23 +2,18 @@ using Godot;
 using Godot.Collections;
 using MineAndDine;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Xml.Linq;
-using static Godot.TextServer;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Array = Godot.Collections.Array;
 
 public partial class Chunk : Node3D
 {
-	public static readonly float Size = 16;
-	public static readonly int Resolution = 16;
-	public static readonly int NodeVolume = 1;
+	public const float Size = 16;
+	public const int Resolution = 16;
+	public const int NodeVolume = 1;
+
+	private static readonly Image.Format myColorFormat = Image.Format.Rgb8;
 
 	private Vector3I _ChunkIndex;
 	public Vector3I ChunkIndex 
@@ -38,11 +33,13 @@ public partial class Chunk : Node3D
 	{
 		public List<Vector3> vertices;
 		public Array arrays;
+		public Array<Image> colors;
 	}
 
 	private bool myIsDirty = true;
 	private MeshInfo myNewMesh = null;
 
+	ImageTexture3D myTexture = new ImageTexture3D();
 	ArrayMesh myMesh = new ArrayMesh();
 	ConcavePolygonShape3D myCollisionMesh;
 	ShaderMaterial myMaterial;
@@ -98,14 +95,15 @@ public partial class Chunk : Node3D
 			}
 		}
 
+		myTexture.CreatePlaceholder();
+
 		MeshInstance3D meshComp = GetNode<MeshInstance3D>("Mesh");
 
 		myMaterial = meshComp.Mesh.SurfaceGetMaterial(0).Duplicate() as ShaderMaterial;
 
 		myMaterial.SetShaderParameter("Size", Size);
 		myMaterial.SetShaderParameter("Offset", ChunkIndex);
-		myMaterial.SetShaderParameter("LightColor", new Vector3(0.8f, 0.7f, 0.5f));
-		myMaterial.SetShaderParameter("DarkColor", new Vector3(0.4f, 0.3f, 0.1f));
+		myMaterial.SetShaderParameter("Color", myTexture);
 
 		meshComp.Mesh = myMesh;
 
@@ -137,6 +135,7 @@ public partial class Chunk : Node3D
                 myMesh.SurfaceSetMaterial(0, myMaterial);
             }
 
+            myTexture.Create(myColorFormat, Resolution + 1, Resolution + 1, Resolution + 1, false, info.colors);
             myCollisionMesh.SetFaces(info.vertices.ToArray());
 
 			GD.Print("Mesh application took ", watch.ElapsedMilliseconds, "ms");
@@ -253,6 +252,7 @@ public partial class Chunk : Node3D
 		watch.Start();
 
 		float[,,] values = new float[Resolution + 1, Resolution + 1, Resolution + 1];
+		Vector3[,,] colors = new Vector3[Resolution + 1, Resolution + 1, Resolution + 1];
 
 		for (int x = 0;	x <= Resolution; x++)
 		{
@@ -261,6 +261,7 @@ public partial class Chunk : Node3D
 				for (int z = 0;	z <= Resolution; z++)
 				{
 					values[x, y, z] = 0.0f;
+					colors[x, y, z] = Vector3.Zero;
 				}
 			}
 		}
@@ -280,6 +281,7 @@ public partial class Chunk : Node3D
             {
 				Vector3I at = pos + chunkOffset * Resolution;
                 values[at.X,at.Y,at.Z] = MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
+                colors[at.X,at.Y,at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
             }
         }
 		
@@ -290,13 +292,40 @@ public partial class Chunk : Node3D
 		List<float> materials = CalculateMaterials(vertices);
 
 		// Initialize the ArrayMesh.
-		var arrays = new Array();
+		Array arrays = new Array();
 		arrays.Resize((int)Mesh.ArrayType.Max);
 		arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
 		arrays[(int)Mesh.ArrayType.Normal] = normals.ToArray();
 		arrays[(int)Mesh.ArrayType.Custom0] = materials.ToArray();
 
-		Interlocked.Exchange(ref myNewMesh, new MeshInfo { vertices = vertices, arrays = arrays });
+		Array<Image> imageLayers = new Array<Image>();
+
+        imageLayers.Resize(Resolution + 1);
+
+		// TODO this is likely flipped one way or the other
+		for (int z = 0; z <= Resolution; z++)
+        {
+			const int width = Resolution + 1;
+			const int height = Resolution + 1;
+
+			byte[] imageData = new byte[width * height * 3];
+
+			for (int x = 0; x < width; x++)
+			{
+				for (int y = 0; y < height; y++)
+				{
+					imageData[(y * width + x) * 3 + 0] = (byte)(colors[x, y, z].X * 255.0f);
+					imageData[(y * width + x) * 3 + 1] = (byte)(colors[x, y, z].Y * 255.0f);
+					imageData[(y * width + x) * 3 + 2] = (byte)(colors[x, y, z].Z * 255.0f);
+
+                }
+			}
+
+            imageLayers[z] = Image.CreateFromData(Resolution + 1, Resolution + 1, false, myColorFormat, imageData);
+		}
+
+
+		Interlocked.Exchange(ref myNewMesh, new MeshInfo { vertices = vertices, arrays = arrays, colors = imageLayers });
 
 		myIsDirty = false;
 

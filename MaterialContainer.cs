@@ -105,5 +105,22 @@ namespace MineAndDine
 
             return sum;
         }
+
+        public static Vector3 Color(ref MaterialsList aList)
+        {
+            float sum = 0;
+            Vector3 blend = Vector3.Zero;
+
+            if (Unsafe.IsNullRef(ref aList))
+                return blend;
+
+            foreach (MaterialGroups.ColorMapping mapping in MaterialGroups.Colored)
+            {
+                sum += aList[mapping.Index];
+                blend += mapping.Color * aList[mapping.Index];
+            }
+
+            return blend / sum;
+        }
     }
 }

@@ -3,11 +3,12 @@ render_mode skip_vertex_transform;
 
 uniform float Size;
 uniform ivec3 Offset;
-uniform vec3 LightColor;
-uniform vec3 DarkColor;
 
+uniform sampler3D Color;
+
+varying vec3 WorldNormal;
+varying vec3 WorldPosition;
 varying vec3 UV3;
-varying vec3 MaterialBaseColor;
 
 vec2 random(vec2 uv)
 {
@@ -31,18 +32,17 @@ float perlinNoise(vec3 uv)
 }
 
 void vertex() {
-	UV3 = VERTEX / Size + vec3(Offset);
+	UV3 = VERTEX / Size;
+	WorldPosition = VERTEX + vec3(Offset) * Size;
+	WorldNormal = NORMAL;
+	
 	VERTEX = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	NORMAL = (MODELVIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
 	// Called for every vertex the material is visible on.
-	MaterialBaseColor = CUSTOM0.rgb;
 }
 
 void fragment() {
-	float light = dot(NORMAL, normalize(vec3(1, 3, 1)));
-	float noise = perlinNoise(UV3 * 4.0);
-	ALBEDO = MaterialBaseColor;
-	vec3 shade = mix(DarkColor, LightColor, mix(noise, light, 0.6));
-	ALBEDO = mix(ALBEDO, shade, 0.3);
+	ALBEDO = texture(Color, UV3.xyz).rgb;
 
 }
 
