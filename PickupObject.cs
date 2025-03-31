@@ -26,7 +26,7 @@ namespace MineAndDine
 
             Freeze = true;
             GetNode<CollisionShape3D>("CollisionShape3D").Disabled = true;
-            GlobalPosition = Vector3.Zero;
+            GlobalPosition = myHeldByPlayer.myHand.GlobalPosition;
         }
 
         public void Drop()
