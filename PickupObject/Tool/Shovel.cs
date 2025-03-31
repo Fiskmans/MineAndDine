@@ -48,7 +48,7 @@ namespace MineAndDine
             {
                 foreach (Vector3I nodePos in chunk.AffectedNodes(area))
                 {
-                    float dist = pos.DistanceTo(chunk.WorldPosFromVoxelPos(nodePos));
+                    float dist = pos.DistanceTo(chunk.WorldPosFromNodePos(nodePos));
 
                     if (dist >= myMiningRadius)
                         continue;

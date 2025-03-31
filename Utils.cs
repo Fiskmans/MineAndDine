@@ -50,5 +50,10 @@ namespace MineAndDine
                 }
             }
         }
+
+        public static float Sigmoid(float aValue)
+        {
+            return aValue / (1 + Mathf.Abs(aValue));
+        }
     }
 }

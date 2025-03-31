@@ -36,6 +36,8 @@ public partial class Terrain : Node3D
 	{
 		if (ourInstance != null) throw new Exception("Multiple terrains added to world");
 
+		MaterialGroups.GenerateTables();
+
 		ourInstance = this;
 
 		for (int i = 0;	i < myThreads; i++)

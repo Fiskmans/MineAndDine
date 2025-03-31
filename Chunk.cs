@@ -12,8 +12,9 @@ public partial class Chunk : Node3D
 	public const float Size = 16;
 	public const int Resolution = 16;
 	public const int NodeVolume = 1;
+	private const Image.Format myColorFormat = Image.Format.Rgb8;
 
-	private static readonly Image.Format myColorFormat = Image.Format.Rgb8;
+	private static FastNoiseLite ourNoise;
 
 	private Vector3I _ChunkIndex;
 	public Vector3I ChunkIndex 
@@ -71,56 +72,53 @@ public partial class Chunk : Node3D
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
-	{
-		GD.Randomize();
-
+    {
         myTerrainNodes = new MaterialsList[Resolution, Resolution, Resolution];
 
-		for (int x = 0; x < Resolution; x++)
-		{
-			for (int y = 0; y < Resolution; y++)
-			{
-				for (int z = 0; z < Resolution; z++)
-				{
-					float amount = 0.0f;
+        myTexture.CreatePlaceholder();
 
-					amount -= (ChunkIndex.Y + y / (float)Resolution) * 1.5f;
-					amount += ChunkIndex.X * 0.05f;
-					amount += ChunkIndex.Z * -0.1f;
-					amount += GD.Randf() * 0.03f;
+        MeshInstance3D meshComp = GetNode<MeshInstance3D>("Mesh");
 
-                    myTerrainNodes[x, y, z][(int)MaterialType.Dirt] = amount * 0.9f;
-					myTerrainNodes[x, y, z][(int)MaterialType.Coal] = amount * 0.1f;
-				}
-			}
-		}
+        myMaterial = meshComp.Mesh.SurfaceGetMaterial(0).Duplicate() as ShaderMaterial;
 
-		myTexture.CreatePlaceholder();
+        myMaterial.SetShaderParameter("Size", Size);
+        myMaterial.SetShaderParameter("Offset", ChunkIndex);
+        myMaterial.SetShaderParameter("Color", myTexture);
 
-		MeshInstance3D meshComp = GetNode<MeshInstance3D>("Mesh");
+        meshComp.Mesh = myMesh;
 
-		myMaterial = meshComp.Mesh.SurfaceGetMaterial(0).Duplicate() as ShaderMaterial;
+        myCollisionMesh = new ConcavePolygonShape3D();
+        GetNode<CollisionShape3D>("Collision/CollisionMesh").Shape = myCollisionMesh;
 
-		myMaterial.SetShaderParameter("Size", Size);
-		myMaterial.SetShaderParameter("Offset", ChunkIndex);
-		myMaterial.SetShaderParameter("Color", myTexture);
+        Generate();
+    }
 
-		meshComp.Mesh = myMesh;
+    private void Generate()
+    {
+		GD.Print("Generated");
+        for (int x = 0; x < Resolution; x++)
+        {
+            for (int y = 0; y < Resolution; y++)
+            {
+                for (int z = 0; z < Resolution; z++)
+                {
+					myTerrainNodes[x, y, z].ForeachSet(MaterialGroups.Generatable, (type, value, generator) =>
+					{
+						return generator.Generate(WorldPosFromNodePos(new Vector3I(x, y, z)));
+					});
+                }
+            }
+        }
 
-		myCollisionMesh = new ConcavePolygonShape3D();
-		GetNode<CollisionShape3D>("Collision/CollisionMesh").Shape = myCollisionMesh;
-
-		Terrain.ourInstance.RegisterModification(this);
-	}
+        Terrain.ourInstance.RegisterModification(this);
+    }
 
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+    // Called every frame. 'delta' is the elapsed time since the previous frame.
+    public override void _Process(double delta)
     {
         if (myNewMesh != null)
         {
-			Stopwatch watch = new Stopwatch();
-			watch.Start();
             MeshInfo info = Interlocked.Exchange(ref myNewMesh, null);
 
             myMesh.ClearSurfaces();
@@ -137,8 +135,6 @@ public partial class Chunk : Node3D
 
             myTexture.Create(myColorFormat, Resolution + 1, Resolution + 1, Resolution + 1, false, info.colors);
             myCollisionMesh.SetFaces(info.vertices.ToArray());
-
-			GD.Print("Mesh application took ", watch.ElapsedMilliseconds, "ms");
         }
     }
 
@@ -197,7 +193,12 @@ public partial class Chunk : Node3D
 		if (modified)
 			Terrain.ourInstance.RegisterModification(this);
 
-		GD.Print("Update ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms");
+		watch.Stop();
+
+		if (watch.ElapsedMilliseconds > 2)
+		{
+			GD.Print("Update ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms");
+		}
 	}
 
 	public Vector3I NodePosFromWorldPos(Vector3 aPos)
@@ -205,7 +206,7 @@ public partial class Chunk : Node3D
 		return (Vector3I)((aPos - Position) / Size * Resolution);
 	}
 
-	public Vector3 WorldPosFromVoxelPos(Vector3I aVoxelPos)
+	public Vector3 WorldPosFromNodePos(Vector3I aVoxelPos)
 	{
 		return (Vector3)aVoxelPos * Size / Resolution + Position;
 	}
@@ -329,7 +330,12 @@ public partial class Chunk : Node3D
 
 		myIsDirty = false;
 
-		GD.Print("Remesh ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms ");
+		watch.Stop();
+
+		if (watch.ElapsedMilliseconds > 20)
+		{
+			GD.Print("Remesh ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms ");
+		}
 	}
 
 	List<Vector3> CalculateNormals(List<Vector3> aVerticies)
