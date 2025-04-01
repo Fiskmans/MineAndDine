@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3 uid="uid://dbwweygk0u3ts"]
+
+[ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://PickupObject/Tool/Shovel.cs" id="1_mno0m"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1tp12"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uq1df"]
+albedo_color = Color(0.513726, 0.266667, 0.521569, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_uq1df"]
+size = Vector3(1, 1, 1.01984)
+
+[node name="shovel" type="RigidBody3D"]
+script = ExtResource("1_mno0m")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_1tp12")
+surface_material_override/0 = SubResource("StandardMaterial3D_uq1df")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_uq1df")

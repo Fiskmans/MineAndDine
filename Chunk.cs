@@ -1,6 +1,7 @@
 using Godot;
 using Godot.Collections;
 using MineAndDine;
+using MineAndDine.Materials;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,8 +14,6 @@ public partial class Chunk : Node3D
 	public const int Resolution = 16;
 	public const int NodeVolume = 1;
 	private const Image.Format myColorFormat = Image.Format.Rgb8;
-
-	private static FastNoiseLite ourNoise;
 
 	private Vector3I _ChunkIndex;
 	public Vector3I ChunkIndex 
@@ -51,6 +50,12 @@ public partial class Chunk : Node3D
 	{
 		public Chunk chunk;
 		public Vector3I index;
+
+		public float this[MaterialType aType]
+		{
+			get { return Get()[aType]; }
+			set { Get()[aType] = value; }
+		}
 
 		public ref MaterialsList Get()
 		{
@@ -104,7 +109,7 @@ public partial class Chunk : Node3D
                 {
 					myTerrainNodes[x, y, z].ForeachSet(MaterialGroups.Generatable, (type, value, generator) =>
 					{
-						return generator.Generate(WorldPosFromNodePos(new Vector3I(x, y, z)));
+						return Mathf.Max(generator.Generate(WorldPosFromNodePos(new Vector3I(x, y, z))), 0);
 					});
                 }
             }
@@ -161,37 +166,25 @@ public partial class Chunk : Node3D
 		myIsDirty = true;
 	}
 
-	private bool Simulate(Vector3I aNodePos)
-	{
-		bool modified = false;
-
-		NodeIndex node = NodeAt(aNodePos);
-		NodeIndex below = NodeAt(aNodePos + Vector3I.Down);
-		
-		if (below.InBounds())
-		{
-			if (MaterialInteractions.MoveLoose(ref node.Get(), ref below.Get(), NodeVolume))
-				modified = true;
-		}
-
-		return modified;
-	}
 
 	public void Update()
 	{
-		bool modified = false;
-
 		Stopwatch watch = new Stopwatch();
 		watch.Start();
 
-		foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
-		{
-			if (Simulate(pos))
-				modified = true;
-		}
+		HashSet<Chunk> modifedChunks = new HashSet<Chunk>();
 
-		if (modified)
-			Terrain.ourInstance.RegisterModification(this);
+		foreach((MaterialType type, LooseMaterial material) in MaterialGroups.ForEach(MaterialGroups.Loose))
+        {
+            foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
+            {
+				material.SimulateOn(new NodeIndex { chunk = this, index = pos }, modifedChunks);
+            }
+        }
+		foreach (Chunk chunk in modifedChunks)
+		{
+			Terrain.ourInstance.RegisterModification(chunk);
+		}
 
 		watch.Stop();
 
@@ -318,7 +311,6 @@ public partial class Chunk : Node3D
 					imageData[(y * width + x) * 3 + 0] = (byte)(colors[x, y, z].X * 255.0f);
 					imageData[(y * width + x) * 3 + 1] = (byte)(colors[x, y, z].Y * 255.0f);
 					imageData[(y * width + x) * 3 + 2] = (byte)(colors[x, y, z].Z * 255.0f);
-
                 }
 			}
 

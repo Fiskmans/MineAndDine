@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3 uid="uid://b3s0o6ur3fu0x"]
+
+[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://PickupObject/Placable.cs" id="1_vhdxo"]
+[ext_resource type="PackedScene" uid="uid://v1dt8tn35qa6" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Crate.gltf" id="2_w1p1s"]
+[ext_resource type="PackedScene" uid="uid://cc0hbs1f2wa2l" path="res://Scenes/Fragments/Structures/ArchimedianScrew.tscn" id="3_ruh5b"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_t484e"]
+
+[node name="ArchimedianScrew" type="RigidBody3D"]
+script = ExtResource("1_vhdxo")
+myGhost = ExtResource("2_w1p1s")
+myPlaced = ExtResource("3_ruh5b")
+
+[node name="Prop_Crate2" parent="." instance=ExtResource("2_w1p1s")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.518793, 0)
+shape = SubResource("BoxShape3D_t484e")

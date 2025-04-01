@@ -1,0 +1,40 @@
+[gd_scene load_steps=7 format=3 uid="uid://tjytwoehaf0n"]
+
+[ext_resource type="Texture2D" uid="uid://q5qxmfemq3ii" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/Textures/T_Plaster_ORM.png" id="1_hwsxn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_clnj1"]
+albedo_texture = ExtResource("1_hwsxn")
+
+[sub_resource type="SphereMesh" id="SphereMesh_5x0yr"]
+
+[sub_resource type="TextMesh" id="TextMesh_auv7q"]
+text = "X+"
+
+[sub_resource type="TextMesh" id="TextMesh_3ghgk"]
+text = "Y +"
+
+[sub_resource type="TextMesh" id="TextMesh_wb0bw"]
+text = "Z+"
+
+[node name="Gizmo" type="Node3D"]
+
+[node name="Center" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_clnj1")
+mesh = SubResource("SphereMesh_5x0yr")
+skeleton = NodePath("")
+
+[node name="X+" type="MeshInstance3D" parent="."]
+transform = Transform3D(-8.74228e-08, 0, 2, 0, 2, 0, -2, 0, -8.74228e-08, 1, 0, 0)
+mesh = SubResource("TextMesh_auv7q")
+skeleton = NodePath("../../root/@EditorNode@21298/@Panel@14/@VBoxContainer@15/DockHSplitLeftL/DockHSplitLeftR/DockHSplitMain/@VBoxContainer@26/DockVSplitCenter/@VSplitContainer@54/@VBoxContainer@55/@EditorMainScreen@102/MainScreen/@CanvasItemEditor@11479/@VSplitContainer@11131/@HSplitContainer@11133/@HSplitContainer@11135/@Control@11136/@SubViewportContainer@11137/@SubViewport@11138/Main world/WorldEnvironment")
+
+[node name="Y+" type="MeshInstance3D" parent="."]
+transform = Transform3D(2, 0, 0, 0, -8.74228e-08, 2, 0, -2, -8.74228e-08, 0, 1, 0)
+mesh = SubResource("TextMesh_3ghgk")
+skeleton = NodePath("../../root/@EditorNode@21298/@Panel@14/@VBoxContainer@15/DockHSplitLeftL/DockHSplitLeftR/DockHSplitMain/@VBoxContainer@26/DockVSplitCenter/@VSplitContainer@54/@VBoxContainer@55/@EditorMainScreen@102/MainScreen/@CanvasItemEditor@11479/@VSplitContainer@11131/@HSplitContainer@11133/@HSplitContainer@11135/@Control@11136/@SubViewportContainer@11137/@SubViewport@11138/Main world/WorldEnvironment")
+
+[node name="Z+" type="MeshInstance3D" parent="."]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 1)
+mesh = SubResource("TextMesh_wb0bw")
+skeleton = NodePath("../../root/@EditorNode@21298/@Panel@14/@VBoxContainer@15/DockHSplitLeftL/DockHSplitLeftR/DockHSplitMain/@VBoxContainer@26/DockVSplitCenter/@VSplitContainer@54/@VBoxContainer@55/@EditorMainScreen@102/MainScreen/@CanvasItemEditor@11479/@VSplitContainer@11131/@HSplitContainer@11133/@HSplitContainer@11135/@Control@11136/@SubViewportContainer@11137/@SubViewport@11138/Main world/WorldEnvironment")

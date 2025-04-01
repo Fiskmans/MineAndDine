@@ -12,10 +12,13 @@ namespace MineAndDine.Noise
         FastNoiseLite myInternal;
 
         float myScale = 1.0f;
+        float myHeight = 1.0f;
+        Vector3 axles = Vector3.One;
 
         public PerlinNoise() 
         {
             myInternal = new FastNoiseLite();
+            myInternal.Seed = (int)GD.Randi();
             myInternal.NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin;
         }
 
@@ -25,9 +28,23 @@ namespace MineAndDine.Noise
             return this;
         }
 
+        public PerlinNoise Axles(Vector3I aAxles)
+        {
+            axles = aAxles.Max(Vector3I.Zero).Min(Vector3I.One);
+            return this;
+        }
+
+        public PerlinNoise Height(float aHeight)
+        {
+            myHeight = aHeight;
+            return this;
+        }
+
         public override float Generate(Vector3 aPosition)
         {
-            return myInternal.GetNoise3D(aPosition.X * myScale, aPosition.Y * myScale, aPosition.Z * myScale) / 2.0f + 0.5f;
+            Vector3 final = aPosition * myScale * axles;
+
+            return (myInternal.GetNoise3D(final.X, final.Y, final.Z) / 2.0f + 0.5f) * myHeight;
         }
     }
 }

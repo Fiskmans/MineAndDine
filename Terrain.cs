@@ -1,4 +1,5 @@
 using Godot;
+using Microsoft.VisualBasic;
 using MineAndDine;
 using System;
 using System.Collections.Concurrent;
@@ -20,15 +21,26 @@ public partial class Terrain : Node3D
 
 	public delegate void ChunkedChangeHandler(Chunk aChunk);
 
-	public event ChunkedChangeHandler OnChunkChange;
-
 	Godot.Timer myPulse = new Godot.Timer();
 
 	List<Thread> myWorkerThreads = new List<Thread>();
 
-	ConcurrentDictionary<Chunk, bool> myModifiedChunks = new ConcurrentDictionary<Chunk, bool>();
+	struct ChunkTask
+	{
+		public ChunkTask(Chunk aChunk)
+		{
+			Chunk = aChunk;
+		}
 
-    ConcurrentQueue<Chunk> myTaskList = new ConcurrentQueue<Chunk>();
+		public Chunk Chunk;
+		public bool Update = false;
+		public bool Remesh = false;
+	}
+
+    ConcurrentQueue<ChunkTask> myTaskList = new ConcurrentQueue<ChunkTask>();
+
+    ConcurrentQueue<Chunk> myModifiedChunks = new ConcurrentQueue<Chunk>();
+
     ConcurrentQueue<Chunk> myChunksToRemesh = new ConcurrentQueue<Chunk>();
 
 	// Called when the node enters the scene tree for the first time.
@@ -59,44 +71,80 @@ public partial class Terrain : Node3D
     }
 
 	private void FlushChanges()
-	{
-        foreach (Chunk c in myModifiedChunks.Keys)
-        {
-            myTaskList.Enqueue(c);
-			// This leaks some updates, cant be bothered to fix it right now
-        }
+    {
+		if (!myTaskList.IsEmpty)
+		{
+			return;
+		}
 
-        myModifiedChunks.Clear();
+        HashSet<Chunk> updates = DequeueChunks(myModifiedChunks);
+		HashSet<Chunk> remesh = DequeueChunks(myChunksToRemesh);
+
+		HashSet<Chunk> all = new HashSet<Chunk>();
+
+		all.UnionWith(updates);
+		all.UnionWith(remesh);
+
+        foreach (Chunk c in all)
+        {
+			ChunkTask task = new ChunkTask(c);
+
+			task.Update = updates.Contains(c);
+			task.Remesh = remesh.Contains(c);
+
+            myTaskList.Enqueue(task);
+        }
     }
 
-	private void DoTerrainUpdates()
+    private HashSet<Chunk> DequeueChunks(ConcurrentQueue<Chunk> aChunkQueue)
+    {
+        aChunkQueue.Enqueue(null); // Fence
+        HashSet<Chunk> chunks = new HashSet<Chunk>();
+
+        while (true)
+        {
+            Chunk c;
+            aChunkQueue.TryDequeue(out c);
+
+            if (c == null)
+            {
+                break; // Fence reached
+            }
+
+            chunks.Add(c);
+        }
+
+        return chunks;
+    }
+
+    private void DoTerrainUpdates()
 	{
 		while (true) // TODO, prolly clean this thread up lol
 		{
-			Chunk chunk = null;
-			bool yield = true;
-
-            if (myTaskList.TryDequeue(out chunk))
-            {
-				yield = false;
-                chunk.Update();
-                OnChunkChange?.Invoke(chunk);
-            }
-
-			if (myChunksToRemesh.TryDequeue(out chunk))
+			ChunkTask task;
+			if (!myTaskList.TryDequeue(out task))
 			{
-				yield = false;
-				chunk.RegenerateMesh();
+                Thread.Yield();
+				continue;
 			}
 
-			if (yield)	
-	            Thread.Yield();
+			Chunk chunk = task.Chunk;
+
+            if (task.Update)
+            {
+                chunk.Update();
+            }
+
+			if (task.Remesh)
+			{
+				chunk.RegenerateMesh();
+			}
         }
     }
 
     public void RegisterModification(Chunk aChunk)
 	{
-		myModifiedChunks.TryAdd(aChunk, true);
+		myModifiedChunks.Enqueue(aChunk);
 
 		foreach(Vector3I pos in Utils.Every(aChunk.ChunkIndex - new Vector3I(1,1,1), aChunk.ChunkIndex))
         {

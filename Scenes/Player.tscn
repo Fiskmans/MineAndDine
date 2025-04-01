@@ -1,0 +1,62 @@
+[gd_scene load_steps=6 format=3 uid="uid://b4rpye8vb2np0"]
+
+[ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="1_kne1u"]
+[ext_resource type="Texture2D" uid="uid://diwcvuml5m7fa" path="res://icon.svg" id="2_e80uo"]
+[ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="3_cxr5p"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_uq1df"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fq6ae"]
+
+[node name="Player" type="CharacterBody3D"]
+wall_min_slide_angle = 0.523599
+script = ExtResource("1_kne1u")
+
+[node name="cameraPivot" type="Node3D" parent="."]
+
+[node name="cameraArm" type="SpringArm3D" parent="cameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+spring_length = 4.0
+
+[node name="playerCamera" type="Camera3D" parent="cameraPivot/cameraArm"]
+
+[node name="corsshair" type="Sprite2D" parent="cameraPivot/cameraArm/playerCamera"]
+position = Vector2(576, 324)
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("2_e80uo")
+
+[node name="meshPivot" type="Node3D" parent="."]
+
+[node name="hand" type="Node3D" parent="meshPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.712084, 0.446183, -0.533757)
+
+[node name="handMesh" type="MeshInstance3D" parent="meshPivot/hand"]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+mesh = SubResource("SphereMesh_uq1df")
+
+[node name="Prop_Vine12" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.20619, 0)
+
+[node name="Prop_Vine13" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(0.87165, 0, 0.490128, 0, 1, 0, -0.490128, 0, 0.87165, 0, 1.20619, 0)
+
+[node name="Prop_Vine14" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(0.470781, 0, 0.88225, 0, 1, 0, -0.88225, 0, 0.470781, 0, 1.20619, 0)
+
+[node name="Prop_Vine15" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(-0.188633, 0, 0.982048, 0, 1, 0, -0.982048, 0, -0.188633, 0, 1.20619, 0)
+
+[node name="Prop_Vine16" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(-0.787505, 0, 0.616308, 0, 1, 0, -0.616308, 0, -0.787505, 0, 1.20619, 0)
+
+[node name="Prop_Vine17" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(-0.972828, 0, 0.231527, 0, 1, 0, -0.231527, 0, -0.972828, 0, 1.20619, 0)
+
+[node name="Prop_Vine18" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(-0.726203, 0, -0.68748, 0, 1, 0, 0.68748, 0, -0.726203, 0, 1.20619, 0)
+
+[node name="Prop_Vine19" parent="meshPivot" instance=ExtResource("3_cxr5p")]
+transform = Transform3D(-0.726203, 0, -0.68748, 0, 1, 0, 0.68748, 0, -0.726203, 0, 1.20619, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_fq6ae")

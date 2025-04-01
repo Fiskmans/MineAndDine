@@ -19,6 +19,8 @@ namespace MineAndDine
         Coal,
         CoalDust,
 
+        Gold,
+
         Count
     }
 

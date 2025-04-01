@@ -189,7 +189,7 @@ public partial class PlayerController : CharacterBody3D
             return;
         }
 
-        object clicked = intersection["collider"].Obj;
+        GodotObject clicked = intersection["collider"].AsGodotObject();
 
         (clicked as PickupObject)?.PickUp(this);
         (clicked as Interactable)?.Activate();
