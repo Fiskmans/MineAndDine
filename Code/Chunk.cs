@@ -1,24 +1,19 @@
 using Godot;
 using Godot.Collections;
 using MineAndDine;
+using MineAndDine.Materials;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Xml.Linq;
-using static Godot.TextServer;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Array = Godot.Collections.Array;
 
 public partial class Chunk : Node3D
 {
-    public static readonly float Size = 16;
-    public static readonly int Resolution = 16;
-    public static readonly int NodeVolume = 1;
+    public const float Size = 16;
+    public const int Resolution = 16;
+    public const int NodeVolume = 1;
+    private const Image.Format myColorFormat = Image.Format.Rgb8;
 
     private Vector3I _ChunkIndex;
     public Vector3I ChunkIndex
@@ -38,11 +33,13 @@ public partial class Chunk : Node3D
     {
         public List<Vector3> vertices;
         public Array arrays;
+        public Array<Image> colors;
     }
 
     private bool myIsDirty = true;
     private MeshInfo myNewMesh = null;
 
+    ImageTexture3D myTexture = new ImageTexture3D();
     ArrayMesh myMesh = new ArrayMesh();
     ConcavePolygonShape3D myCollisionMesh;
     ShaderMaterial myMaterial;
@@ -53,6 +50,12 @@ public partial class Chunk : Node3D
     {
         public Chunk chunk;
         public Vector3I index;
+
+        public float this[MaterialType aType]
+        {
+            get { return Get()[aType]; }
+            set { Get()[aType] = value; }
+        }
 
         public ref MaterialsList Get()
         {
@@ -75,28 +78,9 @@ public partial class Chunk : Node3D
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        GD.Randomize();
-
         myTerrainNodes = new MaterialsList[Resolution, Resolution, Resolution];
 
-        for (int x = 0; x < Resolution; x++)
-        {
-            for (int y = 0; y < Resolution; y++)
-            {
-                for (int z = 0; z < Resolution; z++)
-                {
-                    float amount = 0.0f;
-
-                    amount -= (ChunkIndex.Y + y / (float)Resolution) * 1.5f;
-                    amount += ChunkIndex.X * 0.05f;
-                    amount += ChunkIndex.Z * -0.1f;
-                    amount += GD.Randf() * 0.03f;
-
-                    myTerrainNodes[x, y, z][(int)MaterialType.Dirt] = amount * 0.9f;
-                    myTerrainNodes[x, y, z][(int)MaterialType.Coal] = amount * 0.1f;
-                }
-            }
-        }
+        myTexture.CreatePlaceholder();
 
         MeshInstance3D meshComp = GetNode<MeshInstance3D>("Mesh");
 
@@ -104,13 +88,32 @@ public partial class Chunk : Node3D
 
         myMaterial.SetShaderParameter("Size", Size);
         myMaterial.SetShaderParameter("Offset", ChunkIndex);
-        myMaterial.SetShaderParameter("LightColor", new Vector3(0.8f, 0.7f, 0.5f));
-        myMaterial.SetShaderParameter("DarkColor", new Vector3(0.4f, 0.3f, 0.1f));
+        myMaterial.SetShaderParameter("Color", myTexture);
 
         meshComp.Mesh = myMesh;
 
         myCollisionMesh = new ConcavePolygonShape3D();
         GetNode<CollisionShape3D>("Collision/CollisionMesh").Shape = myCollisionMesh;
+
+        Generate();
+    }
+
+    private void Generate()
+    {
+        GD.Print("Generated");
+        for (int x = 0; x < Resolution; x++)
+        {
+            for (int y = 0; y < Resolution; y++)
+            {
+                for (int z = 0; z < Resolution; z++)
+                {
+                    myTerrainNodes[x, y, z].ForeachSet(MaterialGroups.Generatable, (type, value, generator) =>
+                    {
+                        return Mathf.Max(generator.Generate(WorldPosFromNodePos(new Vector3I(x, y, z))), 0);
+                    });
+                }
+            }
+        }
 
         Terrain.ourInstance.RegisterModification(this);
     }
@@ -121,8 +124,6 @@ public partial class Chunk : Node3D
     {
         if (myNewMesh != null)
         {
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
             MeshInfo info = Interlocked.Exchange(ref myNewMesh, null);
 
             myMesh.ClearSurfaces();
@@ -137,12 +138,8 @@ public partial class Chunk : Node3D
                 myMesh.SurfaceSetMaterial(0, myMaterial);
             }
 
+            myTexture.Create(myColorFormat, Resolution + 1, Resolution + 1, Resolution + 1, false, info.colors);
             myCollisionMesh.SetFaces(info.vertices.ToArray());
-
-            if (Utils.AreTerrainPrintsEnabled())
-            {
-                GD.Print("Mesh application took ", watch.ElapsedMilliseconds, "ms");
-            }
         }
     }
 
@@ -169,45 +166,29 @@ public partial class Chunk : Node3D
         myIsDirty = true;
     }
 
-    private bool Simulate(Vector3I aNodePos)
-    {
-        bool modified = false;
-
-        NodeIndex node = NodeAt(aNodePos);
-        NodeIndex below = NodeAt(aNodePos + Vector3I.Down);
-
-        if (below.InBounds())
-        {
-            if (MaterialInteractions.MoveLoose(ref node.Get(), ref below.Get(), NodeVolume))
-            {
-                modified = true;
-            }
-        }
-
-        return modified;
-    }
-
     public void Update()
     {
-        bool modified = false;
-
         Stopwatch watch = new Stopwatch();
         watch.Start();
 
-        foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
+        HashSet<Chunk> modifedChunks = new HashSet<Chunk>();
+
+        foreach ((MaterialType type, LooseMaterial material) in MaterialGroups.ForEach(MaterialGroups.Loose))
         {
-            if (Simulate(pos))
+            foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
             {
-                modified = true;
+                material.SimulateOn(new NodeIndex { chunk = this, index = pos }, modifedChunks);
             }
         }
 
-        if (modified)
+        foreach (Chunk chunk in modifedChunks)
         {
-            Terrain.ourInstance.RegisterModification(this);
+            Terrain.ourInstance.RegisterModification(chunk);
         }
 
-        if (Utils.AreTerrainPrintsEnabled())
+        watch.Stop();
+
+        if (watch.ElapsedMilliseconds > 2)
         {
             GD.Print("Update ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms");
         }
@@ -218,7 +199,7 @@ public partial class Chunk : Node3D
         return (Vector3I)((aPos - Position) / Size * Resolution);
     }
 
-    public Vector3 WorldPosFromVoxelPos(Vector3I aVoxelPos)
+    public Vector3 WorldPosFromNodePos(Vector3I aVoxelPos)
     {
         return (Vector3)aVoxelPos * Size / Resolution + Position;
     }
@@ -259,14 +240,13 @@ public partial class Chunk : Node3D
     public void RegenerateMesh()
     {
         if (!myIsDirty)
-        {
             return;
-        }
 
         Stopwatch watch = new Stopwatch();
         watch.Start();
 
         float[,,] values = new float[Resolution + 1, Resolution + 1, Resolution + 1];
+        Vector3[,,] colors = new Vector3[Resolution + 1, Resolution + 1, Resolution + 1];
 
         for (int x = 0; x <= Resolution; x++)
         {
@@ -275,6 +255,7 @@ public partial class Chunk : Node3D
                 for (int z = 0; z <= Resolution; z++)
                 {
                     values[x, y, z] = 0.0f;
+                    colors[x, y, z] = Vector3.Zero;
                 }
             }
         }
@@ -294,6 +275,7 @@ public partial class Chunk : Node3D
             {
                 Vector3I at = pos + chunkOffset * Resolution;
                 values[at.X, at.Y, at.Z] = MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
+                colors[at.X, at.Y, at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
             }
         }
 
@@ -304,17 +286,45 @@ public partial class Chunk : Node3D
         List<float> materials = CalculateMaterials(vertices);
 
         // Initialize the ArrayMesh.
-        var arrays = new Array();
+        Array arrays = new Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
         arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
         arrays[(int)Mesh.ArrayType.Normal] = normals.ToArray();
         arrays[(int)Mesh.ArrayType.Custom0] = materials.ToArray();
 
-        Interlocked.Exchange(ref myNewMesh, new MeshInfo { vertices = vertices, arrays = arrays });
+        Array<Image> imageLayers = new Array<Image>();
+
+        imageLayers.Resize(Resolution + 1);
+
+        // TODO this is likely flipped one way or the other
+        for (int z = 0; z <= Resolution; z++)
+        {
+            const int width = Resolution + 1;
+            const int height = Resolution + 1;
+
+            byte[] imageData = new byte[width * height * 3];
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    imageData[(y * width + x) * 3 + 0] = (byte)(colors[x, y, z].X * 255.0f);
+                    imageData[(y * width + x) * 3 + 1] = (byte)(colors[x, y, z].Y * 255.0f);
+                    imageData[(y * width + x) * 3 + 2] = (byte)(colors[x, y, z].Z * 255.0f);
+                }
+            }
+
+            imageLayers[z] = Image.CreateFromData(Resolution + 1, Resolution + 1, false, myColorFormat, imageData);
+        }
+
+
+        Interlocked.Exchange(ref myNewMesh, new MeshInfo { vertices = vertices, arrays = arrays, colors = imageLayers });
 
         myIsDirty = false;
 
-        if (Utils.AreTerrainPrintsEnabled())
+        watch.Stop();
+
+        if (watch.ElapsedMilliseconds > 20)
         {
             GD.Print("Remesh ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms ");
         }

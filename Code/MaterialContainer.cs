@@ -1,4 +1,6 @@
-﻿using Godot;
+﻿global using MaterialsList = MineAndDine.MaterialsArray<float>;
+
+using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,41 +8,56 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using static MineAndDine.MaterialGroups;
 
 namespace MineAndDine
 {
-
     public enum MaterialType : int
     {
         Dirt,
         Coal,
         CoalDust,
+        Gold,
 
         Count
     }
 
-    public class MaterialGroups
+    [InlineArray((int)MaterialType.Count)]
+    public struct MaterialsArray<T>
     {
-        public static readonly int[] All = Enumerable.Range(0, ((int)MaterialType.Count)).ToArray();
-        public static readonly int[] Loose = [(int)MaterialType.Dirt, (int)MaterialType.CoalDust];
-
-        public struct ColorMapping
+        private T InternalStorage;
+        public T this[MaterialType aMaterial]
         {
-            public int Index;
-            public Vector3 Color;
+            get
+            {
+                return this[(int)aMaterial];
+            }
+            set
+            {
+                this[(int)aMaterial] = value;
+            }
         }
-
-        public static readonly ColorMapping[] Colored = [
-                new ColorMapping{ Index = (int)MaterialType.Dirt,       Color = new Vector3(0.8f, 0.6f, 0.2f) },
-                new ColorMapping{ Index = (int)MaterialType.Coal,       Color = new Vector3(0.2f, 0.2f, 0.3f) },
-                new ColorMapping{ Index = (int)MaterialType.CoalDust,   Color = new Vector3(0.4f, 0.4f, 0.5f) }
-            ];
     }
 
-    [InlineArray((int)MaterialType.Count)]
-    public struct MaterialsList
+    public static class MaterialExtensions
     {
-        private float InternalStorage;
+        public delegate void MaterialHandler<T>(MaterialType aType, float aAmount, T aObject);
+        public delegate float MaterialModificationHandler<T>(MaterialType aType, float aAmount, T aObject);
+
+        public static void Foreach<T>(this ref MaterialsList aMaterials, MaterialsArray<T> aGroup, MaterialHandler<T> aHandler)
+        {
+            foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
+            {
+                aHandler(type, aMaterials[type], aGroup[type]);
+            }
+        }
+        public static void ForeachSet<T>(this ref MaterialsList aMaterials, MaterialsArray<T> aGroup, MaterialModificationHandler<T> aHandler)
+        {
+            foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
+            {
+                aMaterials[type] = aHandler(type, aMaterials[type], aGroup[type]);
+            }
+        }
     }
 
     public class MaterialInteractions
@@ -51,10 +68,10 @@ namespace MineAndDine
         {
             float available = 0;
 
-            foreach (int mat in MaterialGroups.Loose)
+            aFrom.Foreach(MaterialGroups.Loose, (type, value, angleOfCollapse) =>
             {
-                available += aFrom[mat];
-            }
+                available += value;
+            });
 
             if (available < epsilon)
             {
@@ -73,21 +90,20 @@ namespace MineAndDine
 
             if (fraction >= 1.0f)
             {
-                foreach (int mat in MaterialGroups.Loose)
+                foreach (MaterialType type in MaterialGroups.Indexes(MaterialGroups.Loose))
                 {
-                    aTo[mat] += aFrom[mat];
-                    aFrom[mat] = 0;
-
+                    aTo[type] += aFrom[type];
+                    aFrom[type] = 0;
                 }
             }
             else
             {
                 float fractionLeft = 1.0f - fraction;
 
-                foreach (int mat in MaterialGroups.Loose)
+                foreach (MaterialType type in MaterialGroups.Indexes(MaterialGroups.Loose))
                 {
-                    aTo[mat] += aFrom[mat] * fraction;
-                    aFrom[mat] *= fractionLeft;
+                    aTo[type] += aFrom[type] * fraction;
+                    aFrom[type] *= fractionLeft;
                 }
             }
 
@@ -108,12 +124,31 @@ namespace MineAndDine
                 return sum;
             }
 
-            foreach (int mat in MaterialGroups.All)
+            aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
             {
-                sum += aList[mat];
-            }
+                sum += amount;
+            });
 
             return sum;
+        }
+
+        public static Vector3 Color(ref MaterialsList aList)
+        {
+            float sum = 0;
+            Vector3 blend = Vector3.Zero;
+
+            if (Unsafe.IsNullRef(ref aList))
+            {
+                return blend;
+            }
+
+            aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
+            {
+                sum += amount;
+                blend += color * amount;
+            });
+
+            return blend / sum;
         }
     }
 }

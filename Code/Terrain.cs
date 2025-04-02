@@ -1,142 +1,188 @@
 using Godot;
+using Microsoft.VisualBasic;
 using MineAndDine;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
-
 public partial class Terrain : Node3D
 {
     [Export]
     PackedScene myChunkScene = GD.Load<PackedScene>("res://Scenes/Fragments/chunk.tscn");
 
-	[Export]
-	public int myThreads = 4;
+    [Export]
+    public int myThreads = 4;
 
     public static Terrain ourInstance { get; private set; } = null;
 
-	ConcurrentDictionary<Vector3I, Chunk> myChunks = new ConcurrentDictionary<Vector3I, Chunk>();
+    ConcurrentDictionary<Vector3I, Chunk> myChunks = new ConcurrentDictionary<Vector3I, Chunk>();
 
-	public delegate void ChunkedChangeHandler(Chunk aChunk);
+    public delegate void ChunkedChangeHandler(Chunk aChunk);
 
-	public event ChunkedChangeHandler OnChunkChange;
+    Godot.Timer myPulse = new Godot.Timer();
 
-	Godot.Timer myPulse = new Godot.Timer();
+    List<Thread> myWorkerThreads = new List<Thread>();
 
-	List<Thread> myWorkerThreads = new List<Thread>();
+    struct ChunkTask
+    {
+        public ChunkTask(Chunk aChunk)
+        {
+            Chunk = aChunk;
+        }
 
-	ConcurrentDictionary<Chunk, bool> myModifiedChunks = new ConcurrentDictionary<Chunk, bool>();
+        public Chunk Chunk;
+        public bool Update = false;
+        public bool Remesh = false;
+    }
 
-    ConcurrentQueue<Chunk> myTaskList = new ConcurrentQueue<Chunk>();
+    ConcurrentQueue<ChunkTask> myTaskList = new ConcurrentQueue<ChunkTask>();
+
+    ConcurrentQueue<Chunk> myModifiedChunks = new ConcurrentQueue<Chunk>();
+
     ConcurrentQueue<Chunk> myChunksToRemesh = new ConcurrentQueue<Chunk>();
 
-	// Called when the node enters the scene tree for the first time.
-	public override void _Ready()
-	{
-		if (ourInstance != null) throw new Exception("Multiple terrains added to world");
+    // Called when the node enters the scene tree for the first time.
+    public override void _Ready()
+    {
+        if (ourInstance != null) throw new Exception("Multiple terrains added to world");
 
-		ourInstance = this;
+        MaterialGroups.GenerateTables();
 
-		for (int i = 0;	i < myThreads; i++)
-		{
+        ourInstance = this;
+
+        for (int i = 0; i < myThreads; i++)
+        {
             myWorkerThreads.Add(new Thread(DoTerrainUpdates));
-		}
+        }
 
-		foreach (Thread thread in myWorkerThreads)
-		{
-			thread.Start();
-		}
+        foreach (Thread thread in myWorkerThreads)
+        {
+            thread.Start();
+        }
 
-		myPulse.Timeout += FlushChanges;
-		myPulse.OneShot = false;
-		
-		AddChild(myPulse);
-		myPulse.Start(0.3); //200bpm
-	}
+        myPulse.Timeout += FlushChanges;
+        myPulse.OneShot = false;
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
+        AddChild(myPulse);
+        myPulse.Start(0.3); //200bpm
+    }
+
+    // Called every frame. 'delta' is the elapsed time since the previous frame.
+    public override void _Process(double delta)
     {
     }
 
-	private void FlushChanges()
-	{
-        foreach (Chunk c in myModifiedChunks.Keys)
+    private void FlushChanges()
+    {
+        if (!myTaskList.IsEmpty)
         {
-            myTaskList.Enqueue(c);
-			// This leaks some updates, cant be bothered to fix it right now
+            return;
         }
 
-        myModifiedChunks.Clear();
+        HashSet<Chunk> updates = DequeueChunks(myModifiedChunks);
+        HashSet<Chunk> remesh = DequeueChunks(myChunksToRemesh);
+
+        HashSet<Chunk> all = new HashSet<Chunk>();
+
+        all.UnionWith(updates);
+        all.UnionWith(remesh);
+
+        foreach (Chunk c in all)
+        {
+            ChunkTask task = new ChunkTask(c);
+
+            task.Update = updates.Contains(c);
+            task.Remesh = remesh.Contains(c);
+
+            myTaskList.Enqueue(task);
+        }
     }
 
-	private void DoTerrainUpdates()
-	{
-		while (true) // TODO, prolly clean this thread up lol
-		{
-			Chunk chunk = null;
-			bool yield = true;
+    private HashSet<Chunk> DequeueChunks(ConcurrentQueue<Chunk> aChunkQueue)
+    {
+        aChunkQueue.Enqueue(null); // Fence
+        HashSet<Chunk> chunks = new HashSet<Chunk>();
 
-            if (myTaskList.TryDequeue(out chunk))
+        while (true)
+        {
+            Chunk c;
+            aChunkQueue.TryDequeue(out c);
+
+            if (c == null)
             {
-				yield = false;
-                chunk.Update();
-                OnChunkChange?.Invoke(chunk);
+                break; // Fence reached
             }
 
-			if (myChunksToRemesh.TryDequeue(out chunk))
-			{
-				yield = false;
-				chunk.RegenerateMesh();
-			}
+            chunks.Add(c);
+        }
 
-			if (yield)
-			{
-	            Thread.Yield();
-			}
+        return chunks;
+    }
+
+    private void DoTerrainUpdates()
+    {
+        while (true) // TODO, prolly clean this thread up lol
+        {
+            ChunkTask task;
+            if (!myTaskList.TryDequeue(out task))
+            {
+                Thread.Yield();
+                continue;
+            }
+
+            Chunk chunk = task.Chunk;
+
+            if (task.Update)
+            {
+                chunk.Update();
+            }
+
+            if (task.Remesh)
+            {
+                chunk.RegenerateMesh();
+            }
         }
     }
 
     public void RegisterModification(Chunk aChunk)
-	{
-		myModifiedChunks.TryAdd(aChunk, true);
+    {
+        myModifiedChunks.Enqueue(aChunk);
 
-		foreach(Vector3I pos in Utils.Every(aChunk.ChunkIndex - new Vector3I(1,1,1), aChunk.ChunkIndex))
+        foreach (Vector3I pos in Utils.Every(aChunk.ChunkIndex - new Vector3I(1, 1, 1), aChunk.ChunkIndex))
         {
             Chunk c = TryGetChunk(pos);
+            if (c == null)
+            {
+                continue;
+            }
 
-			if (c == null)
-			{
-				continue;
-			}
-
-			c.MarkDirty();
+            c.MarkDirty();
             myChunksToRemesh.Enqueue(c);
         }
-	}
-
-	public Chunk TryGetChunk(Vector3I aChunkIndex)
-	{
-		Chunk c = null;
-		if (!myChunks.TryGetValue(aChunkIndex, out c))
-		{
-			c = null;
-		}
-
-		return c;
     }
 
-	public IEnumerable<Chunk> AffectedChunks(Aabb aArea)
+    public Chunk TryGetChunk(Vector3I aChunkIndex)
     {
-		foreach(Vector3I pos in Utils.Every(Chunk.IndexFromPos(aArea.Position) - new Vector3I(1, 1, 1), Chunk.IndexFromPos(aArea.End)))
+        Chunk c = null;
+
+        if (!myChunks.TryGetValue(aChunkIndex, out c))
+        {
+            c = null;
+        }
+
+        return c;
+    }
+
+    public IEnumerable<Chunk> AffectedChunks(Aabb aArea)
+    {
+        foreach (Vector3I pos in Utils.Every(Chunk.IndexFromPos(aArea.Position) - new Vector3I(1, 1, 1), Chunk.IndexFromPos(aArea.End)))
         {
             Chunk res;
-
             if (myChunks.TryGetValue(pos, out res))
-			{
+            {
                 yield return res;
-			}
+            }
         }
     }
 
@@ -146,34 +192,34 @@ public partial class Terrain : Node3D
     }
 
     public void Touch(IEnumerable<Vector3I> aChunkPositions)
-	{
-		foreach (Vector3I pos in aChunkPositions)
-		{
-			Touch(pos);
-		}
+    {
+        foreach (Vector3I pos in aChunkPositions)
+        {
+            Touch(pos);
+        }
     }
 
-	public void Touch(Vector3I aChunkPos)
-	{
-		ChunkAt(aChunkPos);
+    public void Touch(Vector3I aChunkPos)
+    {
+        ChunkAt(aChunkPos);
     }
 
-	public Chunk ChunkAt(Vector3I aChunkIndex)
-	{
-		Chunk res;
+    public Chunk ChunkAt(Vector3I aChunkIndex)
+    {
+        Chunk res;
 
-		if (myChunks.TryGetValue(aChunkIndex, out res))
-		{
-			return res;
-		}
+        if (myChunks.TryGetValue(aChunkIndex, out res))
+        {
+            return res;
+        }
 
-		res = (Chunk)myChunkScene.Instantiate();
-		res.ChunkIndex = aChunkIndex;
+        res = (Chunk)myChunkScene.Instantiate();
+        res.ChunkIndex = aChunkIndex;
 
-		AddChild(res);
+        AddChild(res);
 
-		myChunks.TryAdd(aChunkIndex, res);
+        myChunks.TryAdd(aChunkIndex, res);
 
-		return res;
-	}
+        return res;
+    }
 }

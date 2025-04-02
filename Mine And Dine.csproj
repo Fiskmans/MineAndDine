@@ -5,6 +5,7 @@
     <RootNamespace>MineAndDine</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="NewFolder\" />
+    <Compile Remove="NewFolder\**" />
+    <EmbeddedResource Remove="NewFolder\**" />
   </ItemGroup>
 </Project>
