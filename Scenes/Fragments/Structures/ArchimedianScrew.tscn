@@ -1,12 +1,12 @@
 [gd_scene load_steps=10 format=3 uid="uid://cc0hbs1f2wa2l"]
 
 [ext_resource type="PackedScene" uid="uid://v1dt8tn35qa6" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Crate.gltf" id="1_ib5yg"]
-[ext_resource type="Script" uid="uid://ps0e5s5pglhj" path="res://Scenes/Fragments/Structures/ArchimedianScrew.cs" id="1_y438l"]
+[ext_resource type="Script" uid="uid://ps0e5s5pglhj" path="res://Code/ArchimedianScrew.cs" id="1_y438l"]
 [ext_resource type="PackedScene" uid="uid://cctd5gvhx226g" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Brick1.gltf" id="2_5gd00"]
 [ext_resource type="PackedScene" uid="uid://de6sgxry66ygh" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Brick2.gltf" id="3_y438l"]
 [ext_resource type="PackedScene" uid="uid://cqbrvhi56021q" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Brick3.gltf" id="4_n1iom"]
 [ext_resource type="PackedScene" uid="uid://ooaryjgrxhxc" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Corner_ExteriorWide_Brick.gltf" id="5_lb7t6"]
-[ext_resource type="Script" uid="uid://bstfdgenwaiqm" path="res://Interactable.cs" id="7_n1iom"]
+[ext_resource type="Script" uid="uid://bstfdgenwaiqm" path="res://Code/Interactable.cs" id="7_n1iom"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_lb7t6"]
 size = Vector3(0.4, 0.2, 0.4)

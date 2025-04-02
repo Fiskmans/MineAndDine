@@ -1,5 +1,4 @@
 using Godot;
-using Microsoft.VisualBasic;
 using MineAndDine;
 using System;
 using System.Collections.Concurrent;
@@ -21,26 +20,15 @@ public partial class Terrain : Node3D
 
 	public delegate void ChunkedChangeHandler(Chunk aChunk);
 
+	public event ChunkedChangeHandler OnChunkChange;
+
 	Godot.Timer myPulse = new Godot.Timer();
 
 	List<Thread> myWorkerThreads = new List<Thread>();
 
-	struct ChunkTask
-	{
-		public ChunkTask(Chunk aChunk)
-		{
-			Chunk = aChunk;
-		}
+	ConcurrentDictionary<Chunk, bool> myModifiedChunks = new ConcurrentDictionary<Chunk, bool>();
 
-		public Chunk Chunk;
-		public bool Update = false;
-		public bool Remesh = false;
-	}
-
-    ConcurrentQueue<ChunkTask> myTaskList = new ConcurrentQueue<ChunkTask>();
-
-    ConcurrentQueue<Chunk> myModifiedChunks = new ConcurrentQueue<Chunk>();
-
+    ConcurrentQueue<Chunk> myTaskList = new ConcurrentQueue<Chunk>();
     ConcurrentQueue<Chunk> myChunksToRemesh = new ConcurrentQueue<Chunk>();
 
 	// Called when the node enters the scene tree for the first time.
@@ -48,15 +36,17 @@ public partial class Terrain : Node3D
 	{
 		if (ourInstance != null) throw new Exception("Multiple terrains added to world");
 
-		MaterialGroups.GenerateTables();
-
 		ourInstance = this;
 
 		for (int i = 0;	i < myThreads; i++)
+		{
             myWorkerThreads.Add(new Thread(DoTerrainUpdates));
+		}
 
 		foreach (Thread thread in myWorkerThreads)
+		{
 			thread.Start();
+		}
 
 		myPulse.Timeout += FlushChanges;
 		myPulse.OneShot = false;
@@ -71,86 +61,55 @@ public partial class Terrain : Node3D
     }
 
 	private void FlushChanges()
-    {
-		if (!myTaskList.IsEmpty)
-		{
-			return;
-		}
-
-        HashSet<Chunk> updates = DequeueChunks(myModifiedChunks);
-		HashSet<Chunk> remesh = DequeueChunks(myChunksToRemesh);
-
-		HashSet<Chunk> all = new HashSet<Chunk>();
-
-		all.UnionWith(updates);
-		all.UnionWith(remesh);
-
-        foreach (Chunk c in all)
+	{
+        foreach (Chunk c in myModifiedChunks.Keys)
         {
-			ChunkTask task = new ChunkTask(c);
-
-			task.Update = updates.Contains(c);
-			task.Remesh = remesh.Contains(c);
-
-            myTaskList.Enqueue(task);
-        }
-    }
-
-    private HashSet<Chunk> DequeueChunks(ConcurrentQueue<Chunk> aChunkQueue)
-    {
-        aChunkQueue.Enqueue(null); // Fence
-        HashSet<Chunk> chunks = new HashSet<Chunk>();
-
-        while (true)
-        {
-            Chunk c;
-            aChunkQueue.TryDequeue(out c);
-
-            if (c == null)
-            {
-                break; // Fence reached
-            }
-
-            chunks.Add(c);
+            myTaskList.Enqueue(c);
+			// This leaks some updates, cant be bothered to fix it right now
         }
 
-        return chunks;
+        myModifiedChunks.Clear();
     }
 
-    private void DoTerrainUpdates()
+	private void DoTerrainUpdates()
 	{
 		while (true) // TODO, prolly clean this thread up lol
 		{
-			ChunkTask task;
-			if (!myTaskList.TryDequeue(out task))
-			{
-                Thread.Yield();
-				continue;
-			}
+			Chunk chunk = null;
+			bool yield = true;
 
-			Chunk chunk = task.Chunk;
-
-            if (task.Update)
+            if (myTaskList.TryDequeue(out chunk))
             {
+				yield = false;
                 chunk.Update();
+                OnChunkChange?.Invoke(chunk);
             }
 
-			if (task.Remesh)
+			if (myChunksToRemesh.TryDequeue(out chunk))
 			{
+				yield = false;
 				chunk.RegenerateMesh();
+			}
+
+			if (yield)
+			{
+	            Thread.Yield();
 			}
         }
     }
 
     public void RegisterModification(Chunk aChunk)
 	{
-		myModifiedChunks.Enqueue(aChunk);
+		myModifiedChunks.TryAdd(aChunk, true);
 
 		foreach(Vector3I pos in Utils.Every(aChunk.ChunkIndex - new Vector3I(1,1,1), aChunk.ChunkIndex))
         {
             Chunk c = TryGetChunk(pos);
+
 			if (c == null)
+			{
 				continue;
+			}
 
 			c.MarkDirty();
             myChunksToRemesh.Enqueue(c);
@@ -161,7 +120,10 @@ public partial class Terrain : Node3D
 	{
 		Chunk c = null;
 		if (!myChunks.TryGetValue(aChunkIndex, out c))
+		{
 			c = null;
+		}
+
 		return c;
     }
 

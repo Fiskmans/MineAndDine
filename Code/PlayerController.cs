@@ -56,10 +56,14 @@ public partial class PlayerController : CharacterBody3D
 	public override void _PhysicsProcess(double delta)
     {
         if (Input.IsActionJustPressed("main_interact"))
+        {
             Interact((float)delta);
+        }
 
         if (Input.IsActionJustPressed("secondary_interact"))
+        {
             DropHeldObject();
+        }
 
         Vector3 direction = HandleMovementInput();
         ApplyMovement(delta, direction);

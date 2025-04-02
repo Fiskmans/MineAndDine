@@ -10,6 +10,11 @@ namespace MineAndDine
 {
     internal class Utils
     {
+        public static bool AreTerrainPrintsEnabled()
+        {
+            return false;
+        }
+
         public static IEnumerable<Vector3I> Every(Vector3I aFrom, Vector3I aTo)
         {
             for (int x = aFrom.X; x <= aTo.X; x++)
