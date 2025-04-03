@@ -35,7 +35,7 @@ void vertex() {
 	UV3 = VERTEX / Size;
 	WorldPosition = VERTEX + vec3(Offset) * Size;
 	WorldNormal = NORMAL;
-	
+
 	VERTEX = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	NORMAL = (MODELVIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
 	// Called for every vertex the material is visible on.

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cc0hbs1f2wa2l"]
+[gd_scene load_steps=11 format=3 uid="uid://cc0hbs1f2wa2l"]
 
 [ext_resource type="PackedScene" uid="uid://v1dt8tn35qa6" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Crate.gltf" id="1_ib5yg"]
 [ext_resource type="Script" uid="uid://ps0e5s5pglhj" path="res://Code/ArchimedianScrew.cs" id="1_y438l"]
@@ -13,7 +13,9 @@ size = Vector3(0.4, 0.2, 0.4)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_s32je"]
 
-[node name="ArchimedianScrew" type="Node3D"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_y438l"]
+
+[node name="ArchimedianScrew" type="StaticBody3D"]
 script = ExtResource("1_y438l")
 
 [node name="Prop_Crate2" parent="." instance=ExtResource("1_ib5yg")]
@@ -54,3 +56,7 @@ shape = SubResource("BoxShape3D_lb7t6")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Handle/Dial"]
 transform = Transform3D(0.1, 0, 0, 0, -8.74228e-09, -0.1, 0, 0.2, -4.37114e-09, 0, 0, 0)
 mesh = SubResource("CapsuleMesh_s32je")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.233898, 0)
+shape = SubResource("BoxShape3D_y438l")

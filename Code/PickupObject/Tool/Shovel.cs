@@ -35,10 +35,7 @@ namespace MineAndDine
             {
                 GD.Print(collider);
 
-                if(collider.AsGodotObject() is Bucket)
-                {
-                    (collider.AsGodotObject() as Bucket).PutIn(ref myContent);
-                }
+                (collider.AsGodotObject() as Bucket)?.Fill(ref myContent);
             }
             else if (MaterialInteractions.Total(ref myContent) > 0.0f)
             {
@@ -102,7 +99,7 @@ namespace MineAndDine
 
             if (node.InBounds())
             {
-                MaterialInteractions.MoveLoose(ref myContent, ref node.Get(), 1.0f);
+                MaterialInteractions.Move(MaterialGroups.Loose, ref myContent, ref node.Get(), 1.0f);
 
                 //myContent[(int)MaterialType.Dirt] = 0;
             }

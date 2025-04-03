@@ -64,11 +64,11 @@ namespace MineAndDine
     {
         public const float epsilon = 0.001f;
 
-        public static bool MoveLoose(ref MaterialsList aFrom, ref MaterialsList aTo, float aVolume)
+        public static bool Move<T>(MaterialsArray<T> aGroup, ref MaterialsList aFrom, ref MaterialsList aTo, float aVolume)
         {
             float available = 0;
 
-            aFrom.Foreach(MaterialGroups.Loose, (type, value, angleOfCollapse) =>
+            aFrom.Foreach(aGroup, (type, value, angleOfCollapse) =>
             {
                 available += value;
             });
@@ -90,7 +90,7 @@ namespace MineAndDine
 
             if (fraction >= 1.0f)
             {
-                foreach (MaterialType type in MaterialGroups.Indexes(MaterialGroups.Loose))
+                foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
                     aTo[type] += aFrom[type];
                     aFrom[type] = 0;
@@ -100,7 +100,7 @@ namespace MineAndDine
             {
                 float fractionLeft = 1.0f - fraction;
 
-                foreach (MaterialType type in MaterialGroups.Indexes(MaterialGroups.Loose))
+                foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
                     aTo[type] += aFrom[type] * fraction;
                     aFrom[type] *= fractionLeft;
