@@ -38,7 +38,7 @@ namespace MineAndDine.Code.Materials
 
             Noise.Noise height = new PerlinNoise().Axles(new Vector3I(1, 0, 1)).Scale(1.0f).Height(50.0f);
 
-            Noise.Noise ground = new LambdaNoise((pos) => Utils.Sigmoid((pos.Y + height.Generate(pos) - 20.0f) * -5.0f) * 255);
+            Noise.Noise ground = new LambdaNoise((pos) => Utils.Sigmoid(-(pos.Y + height.Generate(pos) - 20.0f) * 3.0f) * 160);
 
             Generatable[MaterialType.Dirt] = ground;
 

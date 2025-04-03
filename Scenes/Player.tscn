@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://b4rpye8vb2np0"]
 
-[ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://PlayerController.cs" id="1_kne1u"]
+[ext_resource type="Script" uid="uid://bc1nfrrhh2xoc" path="res://Code/PlayerController.cs" id="1_kne1u"]
 [ext_resource type="Texture2D" uid="uid://diwcvuml5m7fa" path="res://icon.svg" id="2_e80uo"]
 [ext_resource type="PackedScene" uid="uid://dsti3hhbgvsp8" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Vine1.gltf" id="3_cxr5p"]
 

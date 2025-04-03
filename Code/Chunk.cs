@@ -13,7 +13,7 @@ public partial class Chunk : Node3D
 {
     public const float Size = 16;
     public const int Resolution = 16;
-    public const byte NodeCapacity = 255;
+    public const byte NodeCapacity = 127;
     private const Image.Format myColorFormat = Image.Format.Rgb8;
 
     private Vector3I _ChunkIndex;

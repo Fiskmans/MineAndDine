@@ -90,18 +90,28 @@ namespace MineAndDine
             }
 
             Vector3 pos = ((Vector3)anIntersection["position"]);
+            Chunk.NodeIndex node = Chunk.NodeAt(pos);
 
-            Chunk chunk = Terrain.ourInstance.ChunkAt(Chunk.IndexFromPos(pos));
-            Chunk.NodeIndex node = chunk.NodeAt(chunk.NodePosFromWorldPos(pos));
-
-            if (node.InBounds())
+            for (int i = 0; i < 7; i++)
             {
-                MaterialInteractions.Move(MaterialGroups.Loose, ref myContent, ref node.Get(), Chunk.NodeCapacity);
+                if (!node.InBounds())
+                {
+                    break;
+                }
 
-                //myContent[(int)MaterialType.Dirt] = 0;
+                if (MaterialInteractions.Total(ref myContent) == 0)
+                {
+                    break;
+                }
+
+                MaterialInteractions.Move(MaterialGroups.Loose, ref myContent, ref node.Get(), Chunk.NodeCapacity);
+                Terrain.ourInstance.RegisterModification(node.chunk);
+
+                node = node.Offset(Vector3I.Up);
+
             }
 
-            Terrain.ourInstance.RegisterModification(chunk);
+            GD.Print("After deposit: ", MaterialInteractions.Total(ref myContent));
         }
     }
 }
