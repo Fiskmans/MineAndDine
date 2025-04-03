@@ -29,16 +29,16 @@ namespace MineAndDine.Code.Materials
                 val = new PlaceHolder(); // we wanna put literally anything here so the filters work
             }
 
-            Loose[MaterialType.Dirt] = new LooseMaterial(MaterialType.Dirt, 0.2f, 0.2f, 0.8f);
+            Loose[MaterialType.Dirt] = new LooseMaterial(MaterialType.Dirt, -1.0f, -0.1f, 0.3f);
 
             Color[MaterialType.Dirt] = new Vector3(0.8f, 0.6f, 0.2f);
             Color[MaterialType.Coal] = new Vector3(0.01f, 0.01f, 0.02f);
             Color[MaterialType.CoalDust] = new Vector3(0.4f, 0.4f, 0.5f);
             Color[MaterialType.Gold] = new Vector3(0.8f, 0.0f, 0.0f);
 
-            Noise.Noise height = new PerlinNoise().Axles(new Vector3I(1, 0, 1)).Scale(1.0f).Height(100.0f);
+            Noise.Noise height = new PerlinNoise().Axles(new Vector3I(1, 0, 1)).Scale(1.0f).Height(50.0f);
 
-            Noise.Noise ground = new LambdaNoise((pos) => Mathf.Max(Utils.Sigmoid((pos.Y + height.Generate(pos) - 40.0f) * -5.0f), 0));
+            Noise.Noise ground = new LambdaNoise((pos) => Mathf.Max(Utils.Sigmoid((pos.Y + height.Generate(pos) - 20.0f) * -5.0f), 0));
 
             Generatable[MaterialType.Dirt] = ground;
 

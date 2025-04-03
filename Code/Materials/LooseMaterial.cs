@@ -48,6 +48,23 @@ namespace MineAndDine.Materials
             total += Flow(aNode, aNode.Offset(new Vector3I( 0, 0, 1)), myDeltaHeightSide, aInOutModifiedChunks);
             total += Flow(aNode, aNode.Offset(new Vector3I( 0, 0, 1)), myDeltaHeightSide, aInOutModifiedChunks);
 
+            // Wake up chunks that could possibly flow into this node
+            if (total >= myMinimumMoveAmount)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    for (int z = -1; z <= 1; z++)
+                    {
+                        Chunk.NodeIndex above = aNode.Offset(new Vector3I(x, 1, z));
+
+                        if (above.InBounds())
+                        {
+                            aInOutModifiedChunks.Add(above.chunk);
+                        }
+                    }
+                }
+            }
+
             return total;
         }
 
@@ -78,9 +95,9 @@ namespace MineAndDine.Materials
                 return 0;
             }
 
-            float deltaDelta = delta - aTargetDelta;
+            float deltaToBalance = (delta - aTargetDelta) / 2.0f;
 
-            float amount = Mathf.Min(Mathf.Max(deltaDelta / 2.0f, available), space);
+            float amount = Mathf.Min(Mathf.Min(deltaToBalance, available), space);
 
             if (amount < myMinimumMoveAmount)
             {
