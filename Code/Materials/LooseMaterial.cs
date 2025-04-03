@@ -1,4 +1,5 @@
 ﻿using Godot;
+using MineAndDine.Code.Materials;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,7 +80,7 @@ namespace MineAndDine.Materials
 
             float deltaDelta = delta - aTargetDelta;
 
-            float amount = Mathf.Max(Mathf.Min(deltaDelta / 2.0f, available), space);
+            float amount = Mathf.Min(Mathf.Max(deltaDelta / 2.0f, available), space);
 
             if (amount < myMinimumMoveAmount)
             {

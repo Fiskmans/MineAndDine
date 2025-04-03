@@ -1,6 +1,7 @@
 using Godot;
 using Godot.Collections;
 using MineAndDine;
+using MineAndDine.Code.Materials;
 using MineAndDine.Materials;
 using System;
 using System.Collections.Generic;

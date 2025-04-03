@@ -1,6 +1,7 @@
 using Godot;
 using Microsoft.VisualBasic;
 using MineAndDine;
+using MineAndDine.Code.Materials;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

@@ -36,8 +36,6 @@ script = ExtResource("4_1tp12")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_6m1a7")
 
-[node name="Gizmo" parent="WorldEnvironment" instance=ExtResource("3_1tp12")]
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldEnvironment"]
 transform = Transform3D(0.407437, -0.684802, 0.604187, 0.382877, 0.728729, 0.567766, -0.829096, 2.46798e-07, 0.559106, 5.81467, 7.74966, 5.87733)
 
@@ -54,3 +52,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.27844, 0, 8.15234)
 
 [node name="Bucket" parent="." instance=ExtResource("7_42jam")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.79031, 2.34829, 4.92653)
+
+[node name="Gizmo" parent="." instance=ExtResource("3_1tp12")]

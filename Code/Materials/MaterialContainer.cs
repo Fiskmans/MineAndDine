@@ -1,4 +1,4 @@
-﻿global using MaterialsList = MineAndDine.MaterialsArray<float>;
+﻿global using MaterialsList = MineAndDine.Code.Materials.MaterialsArray<float>;
 
 using Godot;
 using System;
@@ -8,9 +8,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
-using static MineAndDine.MaterialGroups;
 
-namespace MineAndDine
+namespace MineAndDine.Code.Materials
 {
     public enum MaterialType : int
     {

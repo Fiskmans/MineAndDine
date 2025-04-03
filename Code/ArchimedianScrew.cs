@@ -1,5 +1,5 @@
 using Godot;
-using MineAndDine;
+using MineAndDine.Code.Materials;
 using System;
 
 public partial class ArchimedianScrew : Node3D
