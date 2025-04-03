@@ -60,5 +60,20 @@ namespace MineAndDine
         {
             return aValue / (1 + Mathf.Abs(aValue));
         }
+
+        public static int Min(params int[] aValues)
+        {
+            int minimum = int.MaxValue;
+
+            foreach (int val in aValues)
+            {
+                if (val < minimum)
+                {
+                    minimum = val;
+                }
+            }
+
+            return minimum;
+        }
     }
 }

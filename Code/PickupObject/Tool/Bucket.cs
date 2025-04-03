@@ -11,7 +11,7 @@ namespace MineAndDine
     internal partial class Bucket : Tool
     {
         [Export]
-        public float myMaxCapacity { get; private set; } = 10;
+        public byte myMaxCapacity { get; private set; } = 100;
 
         public override void Use()
         {
@@ -29,7 +29,14 @@ namespace MineAndDine
 
         public void Empty()
         {
+            Chunk.NodeIndex node = Chunk.NodeAt(GlobalPosition);
+            if (!node.InBounds())
+            {
+                return;
+            }
 
+            MaterialInteractions.Move(MaterialGroups.All, ref myContent, ref node.Get(), Chunk.NodeCapacity);
+            Terrain.ourInstance.RegisterModification(node.chunk);
         }
     }
 }

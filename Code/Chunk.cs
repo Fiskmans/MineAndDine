@@ -13,7 +13,7 @@ public partial class Chunk : Node3D
 {
     public const float Size = 16;
     public const int Resolution = 16;
-    public const int NodeVolume = 1;
+    public const byte NodeCapacity = 255;
     private const Image.Format myColorFormat = Image.Format.Rgb8;
 
     private Vector3I _ChunkIndex;
@@ -52,7 +52,7 @@ public partial class Chunk : Node3D
         public Chunk chunk;
         public Vector3I index;
 
-        public float this[MaterialType aType]
+        public byte this[MaterialType aType]
         {
             get { return Get()[aType]; }
             set { Get()[aType] = value; }
@@ -110,7 +110,7 @@ public partial class Chunk : Node3D
                 {
                     myTerrainNodes[x, y, z].ForeachSet(MaterialGroups.Generatable, (type, value, generator) =>
                     {
-                        return Mathf.Max(generator.Generate(WorldPosFromNodePos(new Vector3I(x, y, z))), 0);
+                        return (byte)Mathf.Clamp(generator.Generate(WorldPosFromNodePos(new Vector3I(x, y, z))), 0, 255);
                     });
                 }
             }
@@ -275,7 +275,7 @@ public partial class Chunk : Node3D
             foreach (Vector3I pos in Utils.Every(Vector3I.Zero, end))
             {
                 Vector3I at = pos + chunkOffset * Resolution;
-                values[at.X, at.Y, at.Z] = MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
+                values[at.X, at.Y, at.Z] = (float)MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]) / (float)NodeCapacity;
                 colors[at.X, at.Y, at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
             }
         }

@@ -12,7 +12,7 @@ namespace MineAndDine
     internal partial class Shovel : Tool
     {
         [Export]
-        public float myCapacity { get; private set; }
+        public int myCapacity { get; private set; }
         [Export]
         public float myMiningRadius { get; private set; } = 5;
         [Export]
@@ -74,11 +74,7 @@ namespace MineAndDine
 
                     Chunk.NodeIndex node = chunk.NodeAt(nodePos);
 
-                    float amount = Mathf.Min(myMiningPower * (1.0f - dist / myMiningRadius), node.Get()[(int)MaterialType.Dirt]);
-
-                    node.Get()[(int)MaterialType.Dirt] -= amount;
-
-                    myContent[(int)MaterialType.Dirt] += amount;
+                    MaterialInteractions.Move(MaterialGroups.Loose, ref node.Get(), ref myContent, myCapacity);
                 }
 
                 chunk.Update();
@@ -100,7 +96,7 @@ namespace MineAndDine
 
             if (node.InBounds())
             {
-                MaterialInteractions.Move(MaterialGroups.Loose, ref myContent, ref node.Get(), 1.0f);
+                MaterialInteractions.Move(MaterialGroups.Loose, ref myContent, ref node.Get(), Chunk.NodeCapacity);
 
                 //myContent[(int)MaterialType.Dirt] = 0;
             }

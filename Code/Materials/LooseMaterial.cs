@@ -10,15 +10,15 @@ namespace MineAndDine.Materials
 {
     public class LooseMaterial
     {
-        const float myMinimumMoveAmount = 0.01f;
+        const byte myMinimumMoveAmount = 1;
 
         MaterialType myType;
 
-        float myDeltaHeigthBelow;
-        float myDeltaHeightBelowSide;
-        float myDeltaHeightSide;
+        int myDeltaHeigthBelow;
+        int myDeltaHeightBelowSide;
+        int myDeltaHeightSide;
 
-        public LooseMaterial(MaterialType aType, float aDeltaBelow, float aDeltaBelowSide, float aDeltaSide)
+        public LooseMaterial(MaterialType aType, int aDeltaBelow, int aDeltaBelowSide, int aDeltaSide)
         {
             myType = aType;
 
@@ -68,36 +68,18 @@ namespace MineAndDine.Materials
             return total;
         }
 
-        private float Flow(Chunk.NodeIndex aFrom, Chunk.NodeIndex aTo, float aTargetDelta, HashSet<Chunk> modifiedChunks)
+        private float Flow(Chunk.NodeIndex aFrom, Chunk.NodeIndex aTo, int aTargetDelta, HashSet<Chunk> modifiedChunks)
         {
             if (!aTo.InBounds())
             {
                 return 0;
             }
 
-            float available = aFrom[myType];
-            if (available < myMinimumMoveAmount)
-            {
-                return 0;
-            }
+            int delta = aFrom[myType] - aTo[myType];
 
-            float space = Chunk.NodeVolume - MaterialInteractions.Total(ref aTo.Get());
+            int deltaToBalance = (delta - aTargetDelta) / 2;
 
-            if (space < myMinimumMoveAmount)
-            {
-                return 0;
-            }
-
-            float delta = aFrom[myType] - aTo[myType];
-
-            if (delta < aTargetDelta)
-            {
-                return 0;
-            }
-
-            float deltaToBalance = (delta - aTargetDelta) / 2.0f;
-
-            float amount = Mathf.Min(Mathf.Min(deltaToBalance, available), space);
+            int amount = Utils.Min(deltaToBalance, aFrom[myType], Chunk.NodeCapacity - MaterialInteractions.Total(ref aTo.Get()));
 
             if (amount < myMinimumMoveAmount)
             {
@@ -107,8 +89,8 @@ namespace MineAndDine.Materials
             modifiedChunks.Add(aFrom.chunk);
             modifiedChunks.Add(aTo.chunk);
 
-            aFrom[myType] -= amount;
-            aTo[myType] += amount;
+            aFrom[myType] -= (byte)amount;
+            aTo[myType] += (byte)amount;
 
             return amount;
         }

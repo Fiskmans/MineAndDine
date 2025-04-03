@@ -1,4 +1,5 @@
-﻿global using MaterialsList = MineAndDine.Code.Materials.MaterialsArray<float>;
+﻿
+global using MaterialsList = MineAndDine.Code.Materials.MaterialsArray<byte>;
 
 using Godot;
 using System;
@@ -40,8 +41,8 @@ namespace MineAndDine.Code.Materials
 
     public static class MaterialExtensions
     {
-        public delegate void MaterialHandler<T>(MaterialType aType, float aAmount, T aObject);
-        public delegate float MaterialModificationHandler<T>(MaterialType aType, float aAmount, T aObject);
+        public delegate void MaterialHandler<T>(MaterialType aType, byte aAmount, T aObject);
+        public delegate byte MaterialModificationHandler<T>(MaterialType aType, byte aAmount, T aObject);
 
         public static void Foreach<T>(this ref MaterialsList aMaterials, MaterialsArray<T> aGroup, MaterialHandler<T> aHandler)
         {
@@ -61,33 +62,30 @@ namespace MineAndDine.Code.Materials
 
     public class MaterialInteractions
     {
-        public const float epsilon = 0.001f;
-
-        public static bool Move<T>(MaterialsArray<T> aGroup, ref MaterialsList aFrom, ref MaterialsList aTo, float aVolume)
+        // TODO: this can probably be changed to allow different base-types to source and target so big, one of containers can use int, while nodes uses bytes
+        public static bool Move<T>(MaterialsArray<T> aGroup, ref MaterialsList aFrom, ref MaterialsList aTo, int aCapacity)
         {
-            float available = 0;
+            byte available = 0;
 
             aFrom.Foreach(aGroup, (type, value, angleOfCollapse) =>
             {
                 available += value;
             });
 
-            if (available < epsilon)
+            if (available == 0)
             {
                 return false;
             }
 
 
-            float spaceAvailable = aVolume - Total(ref aTo);
+            float space = aCapacity - Total(ref aTo);
 
-            float fraction = spaceAvailable / available;
-
-            if (fraction < epsilon)
+            if (space == 0)
             {
                 return false;
             }
 
-            if (fraction >= 1.0f)
+            if (available <= space)
             {
                 foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
@@ -97,12 +95,17 @@ namespace MineAndDine.Code.Materials
             }
             else
             {
+
+                float fraction = (float)space / (float)available;
                 float fractionLeft = 1.0f - fraction;
 
+                // TODO: This leaves a slight amount of space left in the target, because of the rounding down, The final space should be filled by weighted random
                 foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
-                    aTo[type] += aFrom[type] * fraction;
-                    aFrom[type] *= fractionLeft;
+                    byte amount = (byte)(aFrom[type] * fraction);
+
+                    aTo[type] += amount;
+                    aFrom[type] -= amount;
                 }
             }
 
@@ -114,9 +117,9 @@ namespace MineAndDine.Code.Materials
             return Total(ref aList) > aSurfaceValue;
         }
 
-        public static float Total(ref MaterialsList aList)
+        public static byte Total(ref MaterialsList aList)
         {
-            float sum = 0;
+            byte sum = 0;
 
             if (Unsafe.IsNullRef(ref aList))
             {
