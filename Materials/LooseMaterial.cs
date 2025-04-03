@@ -9,6 +9,8 @@ namespace MineAndDine.Materials
 {
     public class LooseMaterial
     {
+        const float myMinimumMoveAmount = 0.01f;
+
         MaterialType myType;
 
         float myDeltaHeigthBelow;
@@ -24,60 +26,73 @@ namespace MineAndDine.Materials
             myDeltaHeightSide = aDeltaSide;
         }
 
-        public void SimulateOn(Chunk.NodeIndex aNode, HashSet<Chunk> aInOutModifiedChunks)
+        public float SimulateOn(Chunk.NodeIndex aNode, HashSet<Chunk> aInOutModifiedChunks)
         {
             if (!aNode.InBounds())
             {
-                return;
+                return 0;
             }
 
-            Flow(aNode, aNode.Offset(Vector3I.Down), myDeltaHeigthBelow, aInOutModifiedChunks);
+            float total = 0.0f;
 
-            Flow(aNode, aNode.Offset(new Vector3I( 1,-1, 0)), myDeltaHeightBelowSide, aInOutModifiedChunks);
-            Flow(aNode, aNode.Offset(new Vector3I(-1,-1, 0)), myDeltaHeightBelowSide, aInOutModifiedChunks);
-            Flow(aNode, aNode.Offset(new Vector3I( 0,-1, 1)), myDeltaHeightBelowSide, aInOutModifiedChunks);
-            Flow(aNode, aNode.Offset(new Vector3I( 0,-1, 1)), myDeltaHeightBelowSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(Vector3I.Down), myDeltaHeigthBelow, aInOutModifiedChunks);
 
-            Flow(aNode, aNode.Offset(new Vector3I( 1, 0, 0)), myDeltaHeightSide, aInOutModifiedChunks);
-            Flow(aNode, aNode.Offset(new Vector3I(-1, 0, 0)), myDeltaHeightSide, aInOutModifiedChunks);
-            Flow(aNode, aNode.Offset(new Vector3I( 0, 0, 1)), myDeltaHeightSide, aInOutModifiedChunks);
-            Flow(aNode, aNode.Offset(new Vector3I( 0, 0, 1)), myDeltaHeightSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I( 1,-1, 0)), myDeltaHeightBelowSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I(-1,-1, 0)), myDeltaHeightBelowSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I( 0,-1, 1)), myDeltaHeightBelowSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I( 0,-1, 1)), myDeltaHeightBelowSide, aInOutModifiedChunks);
+
+            total += Flow(aNode, aNode.Offset(new Vector3I( 1, 0, 0)), myDeltaHeightSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I(-1, 0, 0)), myDeltaHeightSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I( 0, 0, 1)), myDeltaHeightSide, aInOutModifiedChunks);
+            total += Flow(aNode, aNode.Offset(new Vector3I( 0, 0, 1)), myDeltaHeightSide, aInOutModifiedChunks);
+
+            return total;
         }
 
-        private void Flow(Chunk.NodeIndex aFrom, Chunk.NodeIndex aTo, float aTargetDelta, HashSet<Chunk> modifiedChunks)
+        private float Flow(Chunk.NodeIndex aFrom, Chunk.NodeIndex aTo, float aTargetDelta, HashSet<Chunk> modifiedChunks)
         {
             if (!aTo.InBounds())
             {
-                return;
+                return 0;
             }
 
             float available = aFrom[myType];
-            if (available <= float.Epsilon * available * 100)
+            if (available < myMinimumMoveAmount)
             {
-                return;
+                return 0;
             }
 
             float space = Chunk.NodeVolume - MaterialInteractions.Total(ref aTo.Get());
 
-            if (space <= float.Epsilon * space * 100)
+            if (space < myMinimumMoveAmount)
             {
-                return;
+                return 0;
             }
 
-            float delta = Mathf.Min(aFrom[myType] - aTo[myType], space);
+            float delta = aFrom[myType] - aTo[myType];
 
-            if (delta <= aTargetDelta + float.Epsilon * delta * 100)
+            if (delta < aTargetDelta)
             {
-                return;
+                return 0;
+            }
+
+            float deltaDelta = delta - aTargetDelta;
+
+            float amount = Mathf.Max(Mathf.Min(deltaDelta / 2.0f, available), space);
+
+            if (amount < myMinimumMoveAmount)
+            {
+                return 0;
             }
 
             modifiedChunks.Add(aFrom.chunk);
             modifiedChunks.Add(aTo.chunk);
 
-            float amount = Mathf.Max((delta - aTargetDelta) / 2.0f, available);
-
             aFrom[myType] -= amount;
             aTo[myType] += amount;
+
+            return amount;
         }
     }
 }

@@ -29,8 +29,7 @@ namespace MineAndDine
                 val = new PlaceHolder(); // we wanna put literally anything here so the filters work
             }
 
-            Loose[MaterialType.Dirt]        = new LooseMaterial(MaterialType.Dirt, -0.2f, 0.2f, 0.8f);
-            Loose[MaterialType.CoalDust]    = new LooseMaterial(MaterialType.CoalDust, 0.5f, 0.9f, 0.9f);
+            Loose[MaterialType.Dirt]        = new LooseMaterial(MaterialType.Dirt, 0.2f, 0.2f, 0.8f);
 
             Color[MaterialType.Dirt]        = new Vector3(0.8f, 0.6f, 0.2f);
             Color[MaterialType.Coal]        = new Vector3(0.01f, 0.01f, 0.02f);

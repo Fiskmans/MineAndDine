@@ -176,10 +176,13 @@ public partial class Chunk : Node3D
 
 		foreach((MaterialType type, LooseMaterial material) in MaterialGroups.ForEach(MaterialGroups.Loose))
         {
+			float moved = 0;
             foreach (Vector3I pos in Utils.Every(Vector3I.Zero, new Vector3I(Resolution - 1, Resolution - 1, Resolution - 1)))
             {
-				material.SimulateOn(new NodeIndex { chunk = this, index = pos }, modifedChunks);
+				moved += material.SimulateOn(new NodeIndex { chunk = this, index = pos }, modifedChunks);
             }
+
+			GD.Print(ChunkIndex, "[", type, "] Moved: ", moved);
         }
 		foreach (Chunk chunk in modifedChunks)
 		{

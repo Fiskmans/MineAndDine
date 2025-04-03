@@ -85,6 +85,11 @@ public partial class Terrain : Node3D
 		all.UnionWith(updates);
 		all.UnionWith(remesh);
 
+		if (all.Count == 0)
+		{
+			return;
+		}
+
         foreach (Chunk c in all)
         {
 			ChunkTask task = new ChunkTask(c);
@@ -94,6 +99,8 @@ public partial class Terrain : Node3D
 
             myTaskList.Enqueue(task);
         }
+
+		GD.Print("Scheduled ", all.Count, " chunk tasks");
     }
 
     private HashSet<Chunk> DequeueChunks(ConcurrentQueue<Chunk> aChunkQueue)
