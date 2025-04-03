@@ -1,12 +1,18 @@
-[gd_scene load_steps=5 format=3 uid="uid://cw56ec48p7lo"]
+[gd_scene load_steps=8 format=3 uid="uid://cw56ec48p7lo"]
 
-[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://PickupObject/Placable.cs" id="1_p1dlh"]
+[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://Code/PickupObject/Placable.cs" id="1_p1dlh"]
 [ext_resource type="PackedScene" uid="uid://bb4quqbqmv6bs" path="res://Scenes/Fragments/Structures/AnchorGhost.tscn" id="2_yu6ef"]
 [ext_resource type="PackedScene" uid="uid://ct7y1w4dy2m66" path="res://Scenes/Fragments/Structures/Anchor.tscn" id="3_uje7a"]
+[ext_resource type="Material" uid="uid://81yv6v5220r6" path="res://Shaders/Wood.tres" id="4_yu6ef"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_k5cj5"]
 radius = 0.25
 height = 1.0
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_xova5"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_d2w44"]
+material = ExtResource("4_yu6ef")
 
 [node name="Anchor" type="RigidBody3D"]
 script = ExtResource("1_p1dlh")
@@ -17,5 +23,13 @@ myPlaced = ExtResource("3_uje7a")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.154978, 0)
 shape = SubResource("CapsuleShape3D_k5cj5")
 
-[node name="Anchor" parent="." instance=ExtResource("3_uje7a")]
+[node name="Anchor" type="Node3D" parent="."]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Anchor"]
+mesh = SubResource("CylinderMesh_xova5")
+surface_material_override/0 = ExtResource("4_yu6ef")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Anchor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.45519, 0)
+mesh = SubResource("CapsuleMesh_d2w44")

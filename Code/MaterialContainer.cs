@@ -1,5 +1,4 @@
-﻿
-global using MaterialsList = MineAndDine.MaterialsArray<float>;
+﻿global using MaterialsList = MineAndDine.MaterialsArray<float>;
 
 using Godot;
 using System;
@@ -18,7 +17,6 @@ namespace MineAndDine
         Dirt,
         Coal,
         CoalDust,
-
         Gold,
 
         Count
@@ -66,17 +64,19 @@ namespace MineAndDine
     {
         public const float epsilon = 0.001f;
 
-        public static bool MoveLoose(ref MaterialsList aFrom, ref MaterialsList aTo, float aVolume)
+        public static bool Move<T>(MaterialsArray<T> aGroup, ref MaterialsList aFrom, ref MaterialsList aTo, float aVolume)
         {
             float available = 0;
 
-            aFrom.Foreach(MaterialGroups.Loose, (type, value, angleOfCollapse) =>
+            aFrom.Foreach(aGroup, (type, value, angleOfCollapse) =>
             {
                 available += value;
             });
 
             if (available < epsilon)
+            {
                 return false;
+            }
 
 
             float spaceAvailable = aVolume - Total(ref aTo);
@@ -84,11 +84,13 @@ namespace MineAndDine
             float fraction = spaceAvailable / available;
 
             if (fraction < epsilon)
+            {
                 return false;
+            }
 
             if (fraction >= 1.0f)
             {
-                foreach(MaterialType type in MaterialGroups.Indexes(MaterialGroups.Loose))
+                foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
                     aTo[type] += aFrom[type];
                     aFrom[type] = 0;
@@ -98,7 +100,7 @@ namespace MineAndDine
             {
                 float fractionLeft = 1.0f - fraction;
 
-                foreach (MaterialType type in MaterialGroups.Indexes(MaterialGroups.Loose))
+                foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
                     aTo[type] += aFrom[type] * fraction;
                     aFrom[type] *= fractionLeft;
@@ -110,7 +112,6 @@ namespace MineAndDine
 
         public static bool Solid(ref MaterialsList aList, float aSurfaceValue)
         {
-
             return Total(ref aList) > aSurfaceValue;
         }
 
@@ -119,7 +120,9 @@ namespace MineAndDine
             float sum = 0;
 
             if (Unsafe.IsNullRef(ref aList))
+            {
                 return sum;
+            }
 
             aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
             {
@@ -135,7 +138,9 @@ namespace MineAndDine
             Vector3 blend = Vector3.Zero;
 
             if (Unsafe.IsNullRef(ref aList))
+            {
                 return blend;
+            }
 
             aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
             {

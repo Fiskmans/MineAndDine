@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://b3s0o6ur3fu0x"]
 
-[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://PickupObject/Placable.cs" id="1_vhdxo"]
+[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://Code/PickupObject/Placable.cs" id="1_vhdxo"]
 [ext_resource type="PackedScene" uid="uid://v1dt8tn35qa6" path="res://Assets/Quaternius/Medieval Village MegaKit[Standard]/glTF/Prop_Crate.gltf" id="2_w1p1s"]
 [ext_resource type="PackedScene" uid="uid://cc0hbs1f2wa2l" path="res://Scenes/Fragments/Structures/ArchimedianScrew.tscn" id="3_ruh5b"]
 
