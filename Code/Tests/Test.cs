@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,7 +15,17 @@ namespace MineAndDine.Code.Tests
 
         private MeshInstance3D myLabel = new MeshInstance3D();
         private TextMesh myLabelText = new TextMesh();
-        private StandardMaterial3D myLabelMaterial = new StandardMaterial3D { AlbedoColor = new Color(1, 1, 0.7f) };
+        private StandardMaterial3D myLabelMaterial = new StandardMaterial3D { AlbedoColor = new Color(1, 1, 1) };
+
+        public enum ResultType
+        {
+            NotStarted,
+            Running,
+            Passed,
+            Failed
+        }
+
+        public ResultType Result { get; private set; } = ResultType.NotStarted;
 
         public override void _Ready()
         {
@@ -26,6 +37,8 @@ namespace MineAndDine.Code.Tests
             AddChild(myLabel);
 
             Setstatus("");
+
+            Result = ResultType.Running;
         }
 
         public void Setstatus(string aStatus)
@@ -33,11 +46,22 @@ namespace MineAndDine.Code.Tests
             myLabelText.Text = mydescription + "\n" + aStatus;
         }
 
+
         public void Expect(bool aValue)
         {
-            myLabelMaterial.AlbedoColor = aValue
-                ? new Color(0.7f, 1, 0.7f)
-                : new Color(1, 0.7f, 0.7f);
+            if (aValue)
+            {
+                return;
+            }
+
+            myLabelMaterial.AlbedoColor = new Color(1, 0.7f, 0.7f);
+            Result = ResultType.Failed;
+        }
+
+        public void Passed()
+        {
+            myLabelMaterial.AlbedoColor = new Color(0.7f, 1, 0.7f);
+            Result = ResultType.Passed;
         }
     }
 }
