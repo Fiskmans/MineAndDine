@@ -134,15 +134,15 @@ namespace MineAndDine.Code.Materials
             return sum;
         }
 
-        public static Vector3 Color(ref MaterialsList aList)
+        public static Color Color(ref MaterialsList aList)
         {
             float sum = 0;
-            Vector3 blend = Vector3.Zero;
+            Color blend = new Color();
 
-            if (Unsafe.IsNullRef(ref aList))
-            {
-                return blend;
-            }
+            blend.R = 0;
+            blend.G = 0;
+            blend.B = 0;
+            blend.A = 0;
 
             aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
             {

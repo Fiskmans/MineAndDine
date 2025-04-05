@@ -28,6 +28,13 @@ namespace MineAndDine
                 }
             }
         }
+        public static IEnumerable<Vector3I> EveryIndex(Vector3I aFrom, Vector3I aTo)
+        {
+            foreach (Vector3I pos in Every(aFrom, aTo - Vector3I.One))
+            {
+                yield return pos;
+            }
+        }
 
         public static Vector3 Lerp(Vector3 a, Vector3 b, float weight)
         {

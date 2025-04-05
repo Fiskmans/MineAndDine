@@ -32,7 +32,7 @@ public partial class Chunk : Node3D
 
     class MeshInfo
     {
-        public List<Vector3> vertices;
+        public Vector3[] vertices;
         public Array arrays;
         public Array<Image> colors;
     }
@@ -44,8 +44,6 @@ public partial class Chunk : Node3D
     ArrayMesh myMesh = new ArrayMesh();
     ConcavePolygonShape3D myCollisionMesh;
     ShaderMaterial myMaterial;
-
-    public const float mySurfaceValue = 0.5f;
 
     public struct NodeIndex
     {
@@ -101,7 +99,7 @@ public partial class Chunk : Node3D
 
     private void Generate()
     {
-        GD.Print("Generated");
+        // TODO: Move this to a worker thread
         for (int x = 0; x < Resolution; x++)
         {
             for (int y = 0; y < Resolution; y++)
@@ -133,14 +131,14 @@ public partial class Chunk : Node3D
             flags |= (long)Mesh.ArrayCustomFormat.RgbFloat << (int)Mesh.ArrayFormat.FormatCustom0Shift;
 
 
-            if (info.vertices.Count > 0)
+            if (info.vertices.Length > 0)
             {
                 myMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, info.arrays, null, null, (Mesh.ArrayFormat)flags);
                 myMesh.SurfaceSetMaterial(0, myMaterial);
             }
 
             myTexture.Create(myColorFormat, Resolution + 1, Resolution + 1, Resolution + 1, false, info.colors);
-            myCollisionMesh.SetFaces(info.vertices.ToArray());
+            myCollisionMesh.SetFaces(info.vertices);
         }
     }
 
@@ -189,7 +187,7 @@ public partial class Chunk : Node3D
 
         watch.Stop();
 
-        if (watch.ElapsedMilliseconds > 2)
+        if (watch.ElapsedMilliseconds > 50)
         {
             GD.Print("Update ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms");
         }
@@ -276,22 +274,20 @@ public partial class Chunk : Node3D
             {
                 Vector3I at = pos + chunkOffset * Resolution;
                 values[at.X, at.Y, at.Z] = (float)MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]) / (float)NodeCapacity;
-                colors[at.X, at.Y, at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
+                colors[at.X, at.Y, at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]).RGB();
             }
         }
 
         MarchingCubes marching = new MarchingCubes(values);
 
-        List<Vector3> vertices = marching.Calculate();
-        List<Vector3> normals = CalculateNormals(vertices);
-        List<float> materials = CalculateMaterials(vertices);
+        Vector3[] vertices = marching.Calculate();
 
         // Initialize the ArrayMesh.
         Array arrays = new Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
-        arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
-        arrays[(int)Mesh.ArrayType.Normal] = normals.ToArray();
-        arrays[(int)Mesh.ArrayType.Custom0] = materials.ToArray();
+        arrays[(int)Mesh.ArrayType.Vertex] = vertices;
+        arrays[(int)Mesh.ArrayType.Normal] = CalculateNormals(vertices);
+        arrays[(int)Mesh.ArrayType.Custom0] = CalculateMaterials(vertices);
 
         Array<Image> imageLayers = new Array<Image>();
 
@@ -331,11 +327,11 @@ public partial class Chunk : Node3D
         }
     }
 
-    List<Vector3> CalculateNormals(List<Vector3> aVerticies)
+    Vector3[] CalculateNormals(Vector3[] aVerticies)
     {
-        List<Vector3> normals = new List<Vector3>(aVerticies.Count);
+        Vector3[] normals = new Vector3[aVerticies.Length];
 
-        for (int i = 0; i < aVerticies.Count; i += 3)
+        for (int i = 0; i < aVerticies.Length; i += 3)
         {
             Vector3 a = aVerticies[i + 0];
             Vector3 b = aVerticies[i + 1];
@@ -343,27 +339,27 @@ public partial class Chunk : Node3D
 
             Vector3 normal = (c - a).Cross(b - a).Normalized();
 
-            normals.Add(normal);
-            normals.Add(normal);
-            normals.Add(normal);
+            normals[i] = normal;
+            normals[i + 1] = normal;
+            normals[i + 2] = normal;
         }
 
         return normals;
     }
 
-    List<float> CalculateMaterials(List<Vector3> aVerticies)
+    float[] CalculateMaterials(Vector3[] aVerticies)
     {
-        List<float> materials = new List<float>(aVerticies.Count * 3);
+        float[] materials = new float[aVerticies.Length * 3];
 
-        for (int i = 0; i < aVerticies.Count; i++)
+        for (int i = 0; i < aVerticies.Length; i++)
         {
             Vector3 pos = aVerticies[i + 0];
 
             Vector3 Color = new Vector3(0.2f, 0.3f, 0.4f);
 
-            materials.Add(Color.X);
-            materials.Add(Color.Y);
-            materials.Add(Color.Z);
+            materials[i + 0] = Color.X;
+            materials[i + 1] = Color.Y;
+            materials[i + 2] = Color.Z;
         }
 
         return materials;

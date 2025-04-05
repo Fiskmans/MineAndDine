@@ -6,7 +6,6 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using static Chunk;
 
 namespace MineAndDine
 {
@@ -16,15 +15,15 @@ namespace MineAndDine
         float mySurface;
         List<Godot.Vector3> myVerticies = new List<Godot.Vector3>();
 
-        public MarchingCubes(float[,,] aValues)
+        public MarchingCubes(float[,,] aValues, float aSurface = 0.5f)
         {
             myValues = aValues;
-            mySurface = 0.5f;
+            mySurface = aSurface;
         }
 
         private float this[Vector3I aPos] { get { return myValues[aPos.X, aPos.Y, aPos.Z]; } }
 
-        public List<Godot.Vector3> Calculate()
+        public Godot.Vector3[] Calculate()
         {
             for (int x = 0; x < myValues.GetLength(0) - 1; x++)
             {
@@ -36,12 +35,15 @@ namespace MineAndDine
                     }
                 }
             }
-            return myVerticies;
+            return myVerticies.ToArray();
         }
 
         Godot.Vector3 PointOnEdge(Vector3I aPos, int aFirst, int aSecond)
         {
-            float weight = Mathf.InverseLerp(this[aPos + ourCorners[aFirst]], this[aPos + ourCorners[aSecond]], mySurfaceValue);
+            float a = this[aPos + ourCorners[aFirst]];
+            float b = this[aPos + ourCorners[aSecond]];
+
+            float weight = Mathf.InverseLerp(a, b, mySurface);
 
             return Utils.Lerp(aPos + ourCorners[aFirst], aPos + ourCorners[aSecond], weight);
         }
