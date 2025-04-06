@@ -46,14 +46,24 @@ public partial class MarchingCubesTest : Test
 
         foreach (Vector3 v in next)
         {
+            float closest = 100;
+            if (myLast.Length == 0)
+            {
+                break;
+            }
             foreach (Vector3 v2 in myLast)
             {
-                if (v.DistanceTo(v2) > delta * 2)
-                {
-                    tooFar = true;
-                }
+                closest = Mathf.Min(closest, v.DistanceTo(v2));
+            }
+
+            if (closest > delta * 4)
+            {
+                tooFar = true;
+                break;
             }
         }
+
+        myLast = next;
 
         Expect(!tooFar);
 
