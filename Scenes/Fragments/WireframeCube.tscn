@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://duet1fkdodvov"]
+
+[ext_resource type="Shader" uid="uid://cpcn0dauaf067" path="res://Shaders/Wireframe.gdshader" id="1_hmllx"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fhc7m"]
+render_priority = 0
+shader = ExtResource("1_hmllx")
+shader_parameter/albedo = Color(0, 0, 0, 0.341176)
+shader_parameter/outline_width = 0.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_4ap3j"]
+lightmap_size_hint = Vector2i(14, 21)
+material = SubResource("ShaderMaterial_fhc7m")
+
+[node name="Outline" type="MeshInstance3D"]
+mesh = SubResource("BoxMesh_4ap3j")

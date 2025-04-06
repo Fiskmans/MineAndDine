@@ -10,8 +10,9 @@ using Color = Godot.Color;
 using System.Threading;
 using System.Linq;
 using MineAndDine.Code.Extensions;
+using MineAndDine.Code.Tests;
 
-public partial class GenerationVisualizer : MeshInstance3D
+public partial class GenerationTest : Test
 {
     [Export]
     public MaterialType myMaterial;
@@ -22,20 +23,20 @@ public partial class GenerationVisualizer : MeshInstance3D
     [Export]
     public float myScale = 10.0f;
 
-    [Export]
-    public float mySurface = 0.5f;
+    static PackedScene WireFrameCube = GD.Load<PackedScene>("res://Scenes/Fragments/WireframeCube.tscn");
 
     struct Layer
     {
         public Vector3[] Verts;
         public Color Color;
+        public bool Final;
     }
 
     ConcurrentQueue<Layer> myNewLayers = new ConcurrentQueue<Layer>();
-
-    List<MeshInstance3D> myLayers = new List<MeshInstance3D>();
+    ArrayMesh Mesh;
 
     Vector3 myOffset;
+    int myLayers = 0;
 
 
     public override void _Ready()
@@ -43,8 +44,18 @@ public partial class GenerationVisualizer : MeshInstance3D
         MaterialGroups.GenerateTables();
 
         base._Ready();
+        MeshInstance3D child = new MeshInstance3D();
+        child.Scale = Vector3.One * (1.0f / mySize);
+
         Mesh = new ArrayMesh();
+        child.Mesh = Mesh;
+        AddChild(child);
+        AddChild(WireFrameCube.Instantiate());
         myOffset = GlobalPosition;
+
+        myDescription = $"Generation of {myMaterial.ToString()}";
+
+        Setstatus("Starting");
 
         new Thread(GenerateLayers).Start();
     }
@@ -53,17 +64,31 @@ public partial class GenerationVisualizer : MeshInstance3D
     {
         base._Process(delta);
 
+        if (Result != ResultType.Running)
+        {
+            return;
+        }
+
         Layer layer;
 
         while (myNewLayers.TryDequeue(out layer))
         {
+            if (layer.Final)
+            {
+                Expect(Mesh.GetSurfaceCount() > 1);
+                Passed();
+                break;
+            }
+
+            myLayers++;
+            Setstatus($"Layer {myLayers}: {layer.Verts.Length / 3} tris");
+
             if (layer.Verts.Length == 0)
             {
                 break;
             }
-;
 
-            (Mesh as ArrayMesh).AddSurfaceFromVerticies(layer.Verts.Select(v => v - Vector3.One * mySize / 2).ToArray());
+            Mesh.AddSurfaceFromVerticies(layer.Verts.Select(v => v - Vector3.One * mySize / 2).ToArray());
 
             StandardMaterial3D material = new StandardMaterial3D();
 
@@ -88,9 +113,11 @@ public partial class GenerationVisualizer : MeshInstance3D
 
         for (int i = 0; i < 256; i += 10)
         {
-            MarchingCubes cubes = new MarchingCubes(data, mySurface);
+            MarchingCubes cubes = new MarchingCubes(data, i);
 
-            myNewLayers.Enqueue(new Layer { Color = new Color(color) { A = 0.3f * (float)i/256 }, Verts = cubes.Calculate() });
+            myNewLayers.Enqueue(new Layer { Color = new Color(color) { A = 0.5f + 0.3f * (float)i/256 }, Verts = cubes.Calculate() });
         }
+
+        myNewLayers.Enqueue(new Layer { Final = true });
     }
 }

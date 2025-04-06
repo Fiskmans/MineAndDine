@@ -11,7 +11,7 @@ namespace MineAndDine.Code.Tests
     public partial class Test : Node3D
     {
         [Export]
-        public string mydescription = "This is a test";
+        public string myDescription = "This is a test";
 
         private MeshInstance3D myLabel = new MeshInstance3D();
         private TextMesh myLabelText = new TextMesh();
@@ -31,7 +31,7 @@ namespace MineAndDine.Code.Tests
         {
             base._Ready();
             myLabel.Mesh = myLabelText;
-            myLabel.Position = Vector3.Up * 2;
+            myLabel.Position = Vector3.Up;
             myLabelText.Material = myLabelMaterial;
 
             AddChild(myLabel);
@@ -43,7 +43,7 @@ namespace MineAndDine.Code.Tests
 
         public void Setstatus(string aStatus)
         {
-            myLabelText.Text = mydescription + "\n" + aStatus;
+            myLabelText.Text = myDescription + "\n" + aStatus;
         }
 
 

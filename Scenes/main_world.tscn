@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=12 format=3 uid="uid://mwujfi7brask"]
 
 [ext_resource type="PackedScene" uid="uid://b4rpye8vb2np0" path="res://Scenes/Player.tscn" id="1_lyqml"]
 [ext_resource type="PackedScene" uid="uid://tjytwoehaf0n" path="res://Scenes/Fragments/gizmo.tscn" id="3_1tp12"]
@@ -7,7 +7,6 @@
 [ext_resource type="PackedScene" uid="uid://cw56ec48p7lo" path="res://Scenes/Items/anchor.tscn" id="5_k5cj5"]
 [ext_resource type="PackedScene" uid="uid://b3s0o6ur3fu0x" path="res://Scenes/Items/archimedian_screw.tscn" id="6_lyqml"]
 [ext_resource type="PackedScene" uid="uid://cxatghrh4hwfs" path="res://Scenes/Items/Bucket.tscn" id="7_42jam"]
-[ext_resource type="Script" uid="uid://b7r6e3asgww8o" path="res://Code/GenerationVisualizer.cs" id="8_k5cj5"]
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_actfc"]
 
@@ -24,12 +23,6 @@ sky = SubResource("Sky_bx0ng")
 ambient_light_source = 3
 ambient_light_color = Color(1, 1, 1, 1)
 ambient_light_sky_contribution = 0.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lyqml"]
-transparency = 1
-
-[sub_resource type="BoxMesh" id="BoxMesh_oxewe"]
-material = SubResource("StandardMaterial3D_lyqml")
 
 [node name="Main world" type="Node3D"]
 
@@ -64,11 +57,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.79031, 2.34829, 4.92653)
 myMaxCapacity = 200
 
 [node name="Gizmo" parent="." instance=ExtResource("3_1tp12")]
-
-[node name="Generation debugger" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, -4.15572, 0)
-mesh = SubResource("BoxMesh_oxewe")
-script = ExtResource("8_k5cj5")
-mySize = 32
-myScale = 5.0
-mySurface = 0.0

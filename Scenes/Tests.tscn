@@ -1,21 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://cqsxshisp8u0l"]
+[gd_scene load_steps=8 format=3 uid="uid://cqsxshisp8u0l"]
 
 [ext_resource type="Script" uid="uid://didpr6lmh12vs" path="res://Code/Terrain.cs" id="1_km1s4"]
 [ext_resource type="Script" uid="uid://cxk677177s6uu" path="res://Code/Tests/MarchingCubesTest.cs" id="2_nyy1i"]
-[ext_resource type="Shader" uid="uid://cpcn0dauaf067" path="res://Shaders/Wireframe.gdshader" id="3_0uj3w"]
+[ext_resource type="PackedScene" uid="uid://duet1fkdodvov" path="res://Scenes/Fragments/WireframeCube.tscn" id="3_fhc7m"]
 [ext_resource type="Script" uid="uid://b8x5bq6acqmpy" path="res://Code/Freecam.cs" id="3_nyy1i"]
-[ext_resource type="Script" uid="uid://b7r6e3asgww8o" path="res://Code/GenerationVisualizer.cs" id="4_itl5f"]
 [ext_resource type="Script" uid="uid://ifalty87v50d" path="res://Code/Tests/TestResults.cs" id="5_fhc7m"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fhc7m"]
-render_priority = 0
-shader = ExtResource("3_0uj3w")
-shader_parameter/albedo = Color(0, 0, 0, 0.341176)
-shader_parameter/outline_width = 0.0
-
-[sub_resource type="BoxMesh" id="BoxMesh_4ap3j"]
-lightmap_size_hint = Vector2i(14, 21)
-material = SubResource("ShaderMaterial_fhc7m")
+[ext_resource type="Script" uid="uid://dccqer4gfnn21" path="res://Code/Tests/GenerationTests.cs" id="6_fhc7m"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_fhc7m"]
 
@@ -26,13 +16,11 @@ script = ExtResource("1_km1s4")
 
 [node name="MarchingCubesTest" type="Node3D" parent="."]
 script = ExtResource("2_nyy1i")
-mydescription = "0->1.5 should be a smooth sweep across a cube"
 
-[node name="Outline" type="MeshInstance3D" parent="MarchingCubesTest"]
-mesh = SubResource("BoxMesh_4ap3j")
+[node name="Outline" parent="MarchingCubesTest" instance=ExtResource("3_fhc7m")]
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.94254)
+transform = Transform3D(1, 0, 0, 0, 0.850343, 0.526229, 0, -0.526229, 0.850343, 0, 1.41978, 3.83971)
 script = ExtResource("3_nyy1i")
 
 [node name="Label" type="Label" parent="Camera3D"]
@@ -47,9 +35,6 @@ script = ExtResource("5_fhc7m")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.73274, -0.335829, 0.591871, -0.236225, 0.69014, 0.684035, -0.638193, -0.641034, 0.426362, 4.92711, 3.25258, 3.26734)
 
-[node name="Node3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 2, 0, 0)
-script = ExtResource("4_itl5f")
-myMaterial = 1
-myScale = 5.0
-mySurface = 64.0
+[node name="Generation" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+script = ExtResource("6_fhc7m")
