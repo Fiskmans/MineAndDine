@@ -13,6 +13,18 @@ namespace MineAndDine
         [Export]
         public byte myMaxCapacity { get; private set; } = 100;
 
+        [Export]
+        private MeshInstance3D myFillMesh;
+        [Export]
+        private Node3D myFillStartTransform;
+        [Export]
+        private Node3D myFillEndTransform;
+
+        public override void _Ready()
+        {
+            myFillMesh.Visible = false;
+        }
+
         public override void Use()
         {
             if (MaterialInteractions.Total(ref myContent) > 0.0f)
@@ -24,7 +36,18 @@ namespace MineAndDine
         public void Fill(ref MaterialsList someMaterials)
         {
             MaterialInteractions.Move(MaterialGroups.All, ref someMaterials, ref myContent, myMaxCapacity);
-            GD.Print("Bucket: ", MaterialInteractions.Total(ref myContent), " Shovel: ", MaterialInteractions.Total(ref someMaterials));
+
+            GD.Print("Bucket: ", MaterialInteractions.Total(ref myContent), " (max: ", myMaxCapacity, ") Shovel: ", MaterialInteractions.Total(ref someMaterials));
+
+            byte currentAmount = MaterialInteractions.Total(ref myContent);
+
+            if (currentAmount > 0)
+            {
+                myFillMesh.Visible = true;
+                myFillMesh.Scale = myFillStartTransform.Scale.Lerp(myFillEndTransform.Scale, (float)(currentAmount) / (float)(myMaxCapacity));
+                myFillMesh.Position = myFillStartTransform.Position.Lerp(myFillEndTransform.Position, (float)(currentAmount) / (float)(myMaxCapacity));
+            }
+
         }
 
         public void Empty()
@@ -37,6 +60,8 @@ namespace MineAndDine
 
             MaterialInteractions.Move(MaterialGroups.All, ref myContent, ref node.Get(), Chunk.NodeCapacity);
             Terrain.ourInstance.RegisterModification(node.chunk);
+
+            myFillMesh.Visible = false;
         }
     }
 }

@@ -28,6 +28,7 @@ ambient_light_sky_contribution = 0.0
 
 [node name="CharacterBody3D" parent="." instance=ExtResource("1_lyqml")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.36088, 0)
+myJumpStrength = 6.0
 
 [node name="Terrain" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.22908, 0)
@@ -41,6 +42,7 @@ transform = Transform3D(0.407437, -0.684802, 0.604187, 0.382877, 0.728729, 0.567
 
 [node name="shovel" parent="." instance=ExtResource("4_42jam")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55107, 4.90979)
+myCapacity = 30
 myMiningRadius = 2.0
 myMiningPower = 10.0
 
@@ -52,8 +54,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75066, 3.09823, 0)
 [node name="ArchimedianScrew" parent="." instance=ExtResource("6_lyqml")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.27844, 0, 8.15234)
 
-[node name="Bucket" parent="." instance=ExtResource("7_42jam")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.79031, 2.34829, 4.92653)
-myMaxCapacity = 200
-
 [node name="Gizmo" parent="." instance=ExtResource("3_1tp12")]
+
+[node name="Bucket" parent="." instance=ExtResource("7_42jam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.82232, 1.90396, 3.81132)

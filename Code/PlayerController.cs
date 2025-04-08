@@ -21,6 +21,9 @@ public partial class PlayerController : CharacterBody3D
     [Export]
     public float myReach { get; set; } = 16;
 
+    [Export]
+    public float myJumpStrength { get; set; } = 5;
+
     [Export(PropertyHint.Range, "0.f,1.f,0.01f")]
     float myCameraSensitivity = 0.01f;
     [Export(PropertyHint.Range, "0.f,360.f,1.f,radians_as_degrees")]
@@ -82,7 +85,7 @@ public partial class PlayerController : CharacterBody3D
             }
             if (Input.IsActionPressed("jump"))
             {
-                myTargetVelocity.Y = 5;
+                myTargetVelocity.Y = myJumpStrength;
             }
         }
         else
@@ -93,7 +96,9 @@ public partial class PlayerController : CharacterBody3D
         Velocity = myTargetVelocity;
 
         if (MoveAndSlide())
+        {
             HandleCollision();
+        }
     }
 
     private Vector3 HandleMovementInput()

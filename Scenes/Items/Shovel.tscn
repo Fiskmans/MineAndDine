@@ -14,7 +14,10 @@ height = 7.44541
 size = Vector3(1.41919, 0.203125, 1.13477)
 
 [node name="Shovel" type="RigidBody3D"]
+transform = Transform3D(0.763875, 0.645364, 0, -0.645364, 0.763875, 0, 0, 0, 1, 0, 0, 0)
+collision_layer = 3
 script = ExtResource("1_gdkt8")
+myCapacity = 200
 
 [node name="Shovel" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.015, 0, 0, 0, 0.015, 0, 0, 0, 0.015, -5.96046e-08, 1.49012e-08, 1.45519e-11)
