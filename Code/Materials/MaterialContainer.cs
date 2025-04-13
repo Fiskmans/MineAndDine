@@ -9,6 +9,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.Numerics;
+using System.Globalization;
 
 namespace MineAndDine.Code.Materials
 {
@@ -41,17 +43,17 @@ namespace MineAndDine.Code.Materials
 
     public static class MaterialExtensions
     {
-        public delegate void MaterialHandler<T>(MaterialType aType, byte aAmount, T aObject);
-        public delegate byte MaterialModificationHandler<T>(MaterialType aType, byte aAmount, T aObject);
+        public delegate void MaterialHandler<T, U>(MaterialType aType, U aAmount, T aObject);
+        public delegate U MaterialModificationHandler<T, U>(MaterialType aType, U aAmount, T aObject);
 
-        public static void Foreach<T>(this ref MaterialsList aMaterials, MaterialsArray<T> aGroup, MaterialHandler<T> aHandler)
+        public static void Foreach<T, U>(this ref MaterialsArray<U> aMaterials, MaterialsArray<T> aGroup, MaterialHandler<T, U> aHandler)
         {
             foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
             {
                 aHandler(type, aMaterials[type], aGroup[type]);
             }
         }
-        public static void ForeachSet<T>(this ref MaterialsList aMaterials, MaterialsArray<T> aGroup, MaterialModificationHandler<T> aHandler)
+        public static void ForeachSet<T, U>(this ref MaterialsArray<U> aMaterials, MaterialsArray<T> aGroup, MaterialModificationHandler<T, U> aHandler)
         {
             foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
             {
@@ -62,54 +64,59 @@ namespace MineAndDine.Code.Materials
 
     public class MaterialInteractions
     {
-        // TODO: this can probably be changed to allow different base-types to source and target so big, one of containers can use int, while nodes uses bytes
-        public static bool Move<T>(MaterialsArray<T> aGroup, ref MaterialsList aFrom, ref MaterialsList aTo, int aCapacity)
+        public static bool Move<T, U, V>(MaterialsArray<T> aGroup, ref MaterialsArray<U> aFrom, ref MaterialsArray<V> aTo, V aCapacity) 
+            where U : INumber<U>
+            where V : INumber<V>
         {
-            byte available = 0;
+            U availableU = default;
 
             aFrom.Foreach(aGroup, (type, value, angleOfCollapse) =>
             {
-                available += value;
+                availableU += value;
             });
 
-            if (available == 0)
+            if (availableU == default)
             {
                 return false;
             }
 
+            V available = V.CreateChecked(availableU);
+            V space = aCapacity - Total(ref aTo);
 
-            float space = aCapacity - Total(ref aTo);
-
-            if (space == 0)
+            if (space == default)
             {
                 return false;
             }
 
-            if (available <= space)
+            if (available > space)
             {
-                foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
-                {
-                    aTo[type] += aFrom[type];
-                    aFrom[type] = 0;
-                }
-            }
-            else
-            {
-
-                float fraction = (float)space / (float)available;
+                float fraction = float.CreateChecked(space) / float.CreateChecked(available);
                 float fractionLeft = 1.0f - fraction;
+
+                bool movedAny = false;
 
                 // TODO: This leaves a slight amount of space left in the target, because of the rounding down, The final space should be filled by weighted random
                 foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
                 {
-                    byte amount = (byte)(aFrom[type] * fraction);
+                    V amount = V.CreateChecked(float.CreateChecked(aFrom[type]) * fraction);
+
+                    movedAny |= amount != default;
 
                     aTo[type] += amount;
-                    aFrom[type] -= amount;
+                    aFrom[type] -= U.CreateChecked(amount);
                 }
-            }
 
-            return true;
+                return movedAny;
+            }
+            else
+            {
+                foreach (MaterialType type in MaterialGroups.Indexes(aGroup))
+                {
+                    aTo[type] = aTo[type] + V.CreateChecked(aFrom[type]);
+                    aFrom[type] = default;
+                }
+                return true;
+            }
         }
 
         public static bool Solid(ref MaterialsList aList, float aSurfaceValue)
@@ -117,14 +124,9 @@ namespace MineAndDine.Code.Materials
             return Total(ref aList) > aSurfaceValue;
         }
 
-        public static byte Total(ref MaterialsList aList)
+        public static T Total<T>(ref MaterialsArray<T> aList) where T : INumber<T>
         {
-            byte sum = 0;
-
-            if (Unsafe.IsNullRef(ref aList))
-            {
-                return sum;
-            }
+            T sum = default;
 
             aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
             {
@@ -134,9 +136,9 @@ namespace MineAndDine.Code.Materials
             return sum;
         }
 
-        public static Color Color(ref MaterialsList aList)
+        public static Color Color<T>(ref MaterialsArray<T> aList) where T : INumber<T>
         {
-            float sum = 0;
+            float sum = default;
             Color blend = new Color();
 
             blend.R = 0;
@@ -146,8 +148,9 @@ namespace MineAndDine.Code.Materials
 
             aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
             {
-                sum += amount;
-                blend += color * amount;
+                float fAmount = float.CreateChecked(amount);
+                sum += fAmount;
+                blend += color * fAmount;
             });
 
             return blend / sum;

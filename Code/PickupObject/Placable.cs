@@ -5,7 +5,7 @@ using System;
 
 namespace MineandDine
 {
-    internal partial class Placable : Tool
+    internal partial class Placable : PickupObject
     {
         [Export]
         PackedScene myGhost;
@@ -43,8 +43,6 @@ namespace MineandDine
 
         public override void Use()
         {
-            base.Use();
-
             Node root = GetTree().Root;
 
             if (myPlacingGhost == null)

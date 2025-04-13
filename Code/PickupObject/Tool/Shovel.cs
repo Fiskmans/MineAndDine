@@ -18,100 +18,42 @@ namespace MineAndDine
         [Export]
         public float myMiningPower { get; private set; } = 1;
 
-        public override void Use()
+        public override string ToString()
         {
-            ArgumentNullException.ThrowIfNull(myHeldByPlayer);
+            return $"Shovel {myContainer}";
+        }
 
-            GD.Print(MaterialInteractions.Total(ref myContent));
-
-            Dictionary intersection = myHeldByPlayer.DoRayCast(2);
-
-            if (intersection.Count == 0)
+        public override bool InteractWith(Node3D aNode, Vector3 aAt)
+        {
+            if (base.InteractWith(aNode, aAt))
             {
-                return;
+                return true;
             }
 
-            Variant collider;
-            if (intersection.TryGetValue("collider", out collider) && collider.AsGodotObject() is Tool)
+            if (myContainer.Empty)
             {
-                GD.Print(collider);
-
-                (collider.AsGodotObject() as Bucket)?.Fill(ref myContent);
-            }
-            else if (MaterialInteractions.Total(ref myContent) > 0.0f)
-            {
-                Deposit(intersection);
+                DigAt(aAt);
             }
             else
             {
-                Dig(intersection);
+                DepositAt(aAt);
             }
+
+            return true;
         }
 
-        public void Dig(Dictionary anIntersection)
+        public void DigAt(Vector3 aPosition)
         {
-            if (anIntersection.Count == 0)
+
+            Chunk.NodeIndex node = Chunk.NodeAt(aPosition);
+
+            if (!node.InBounds())
             {
                 return;
             }
 
-            Vector3 pos = ((Vector3)anIntersection["position"]);
-
-            Aabb area = new Aabb(pos - new Vector3(myMiningRadius, myMiningRadius, myMiningRadius), new Vector3(myMiningRadius, myMiningRadius, myMiningRadius) * 2);
-
-            Terrain.ourInstance.Touch(area);
-
-            foreach (Chunk chunk in Terrain.ourInstance.AffectedChunks(area))
-            {
-                foreach (Vector3I nodePos in chunk.AffectedNodes(area))
-                {
-                    float dist = pos.DistanceTo(chunk.WorldPosFromNodePos(nodePos));
-
-                    if (dist >= myMiningRadius)
-                    {
-                        continue;
-                    }
-
-                    Chunk.NodeIndex node = chunk.NodeAt(nodePos);
-
-                    MaterialInteractions.Move(MaterialGroups.Loose, ref node.Get(), ref myContent, myCapacity);
-                }
-
-                chunk.Update();
-                Terrain.ourInstance.RegisterModification(chunk);
-            }
-        }
-
-        private void Deposit(Dictionary anIntersection)
-        {
-            if (anIntersection.Count == 0)
-            {
-                return;
-            }
-
-            Vector3 pos = ((Vector3)anIntersection["position"]);
-            Chunk.NodeIndex node = Chunk.NodeAt(pos);
-
-            for (int i = 0; i < 7; i++)
-            {
-                if (!node.InBounds())
-                {
-                    break;
-                }
-
-                if (MaterialInteractions.Total(ref myContent) == 0)
-                {
-                    break;
-                }
-
-                MaterialInteractions.Move(MaterialGroups.Loose, ref myContent, ref node.Get(), Chunk.NodeCapacity);
-                Terrain.ourInstance.RegisterModification(node.chunk);
-
-                node = node.Offset(Vector3I.Up);
-
-            }
-
-            GD.Print("After deposit: ", MaterialInteractions.Total(ref myContent));
+            myContainer.TakeFrom(ref node.Get(), MaterialGroups.Loose);
+            Terrain.ourInstance.RegisterModification(node.chunk);
         }
     }
 }

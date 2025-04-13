@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://ceya6vaxwmwnp"]
+[gd_scene load_steps=13 format=3 uid="uid://b4v88ceajd4oi"]
 
 [ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://Code/PickupObject/Tool/Shovel.cs" id="1_gdkt8"]
-[ext_resource type="Texture2D" uid="uid://cshn8d0h2rtin" path="res://Assets/Misc/Shovel/shovel_1K_BaseColor.jpg" id="2_uj8rh"]
-[ext_resource type="ArrayMesh" uid="uid://l1pfq3togv7k" path="res://Assets/Misc/Shovel/shovel.obj" id="3_uefg2"]
+[ext_resource type="Texture2D" uid="uid://chhboc32hs4o8" path="res://Assets/Misc/Shovel/shovel_1K_BaseColor.jpg" id="2_uj8rh"]
+[ext_resource type="ArrayMesh" uid="uid://bvkwjwawx17ux" path="res://Assets/Misc/Shovel/shovel.obj" id="3_uefg2"]
+[ext_resource type="Script" uid="uid://dywr4qgnykatq" path="res://Code/Materials/Container.cs" id="4_x4ilx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5157u"]
 albedo_texture = ExtResource("2_uj8rh")
@@ -13,8 +14,46 @@ height = 7.44541
 [sub_resource type="BoxShape3D" id="BoxShape3D_gdkt8"]
 size = Vector3(1.41919, 0.203125, 1.13477)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x4ilx"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_l2bkf"]
+material = SubResource("StandardMaterial3D_x4ilx")
+
+[sub_resource type="Animation" id="Animation_wyagv"]
+length = 0.001
+tracks/0/type = "scale_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Head/Content")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0.01, 0.01, 0.01)
+
+[sub_resource type="Animation" id="Animation_jquqp"]
+resource_name = "ShovelFill"
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Head/Content")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0.57, 0.09, 0, 1, 1, 0.57, 0.14, 0)
+tracks/1/type = "scale_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Head/Content")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0.01, 0.01, 0.01, 1, 1, 0.3, 0.1, 0.2)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_g0ve0"]
+_data = {
+&"Fill": SubResource("Animation_jquqp"),
+&"RESET": SubResource("Animation_wyagv")
+}
+
 [node name="Shovel" type="RigidBody3D"]
-transform = Transform3D(0.763875, 0.645364, 0, -0.645364, 0.763875, 0, 0, 0, 1, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 collision_layer = 3
 script = ExtResource("1_gdkt8")
 myCapacity = 200
@@ -24,10 +63,24 @@ transform = Transform3D(0.015, 0, 0, 0, 0.015, 0, 0, 0, 0.015, -5.96046e-08, 1.4
 material_override = SubResource("StandardMaterial3D_5157u")
 mesh = ExtResource("3_uefg2")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="Shaft" type="CollisionShape3D" parent="."]
 transform = Transform3D(-6.55671e-09, -0.15, 0, 0.15, -6.55671e-09, 0, 0, 0, 0.15, -0.162571, 0.023224, 0)
 shape = SubResource("CapsuleShape3D_gdkt8")
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="."]
+[node name="Head" type="CollisionShape3D" parent="."]
 transform = Transform3D(0.259375, -0.150748, 0, 0.150748, 0.259375, 0, 0, 0, 0.3, 0.557879, 0.102941, 0.000195312)
 shape = SubResource("BoxShape3D_gdkt8")
+
+[node name="Content" type="MeshInstance3D" parent="Head"]
+transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.57, 0.09, 0)
+mesh = SubResource("SphereMesh_l2bkf")
+skeleton = NodePath("../..")
+script = ExtResource("4_x4ilx")
+myCapacity = 200
+
+[node name="Fill" type="AnimationPlayer" parent="Head/Content"]
+root_node = NodePath("../../..")
+libraries = {
+&"": SubResource("AnimationLibrary_g0ve0")
+}
+movie_quit_on_finish = true

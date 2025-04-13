@@ -187,7 +187,7 @@ public partial class PlayerController : CharacterBody3D
     {
         if (myHeldObject != null)
         {
-            (myHeldObject as Tool)?.Use();
+            myHeldObject.Use();
             return;
         }
 

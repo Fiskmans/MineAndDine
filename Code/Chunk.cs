@@ -74,6 +74,11 @@ public partial class Chunk : Node3D
 
     MaterialsList[,,] myTerrainNodes;
 
+    public override string ToString()
+    {
+        return $"Chunk {ChunkIndex}";
+    }
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -259,22 +264,58 @@ public partial class Chunk : Node3D
             }
         }
 
+        List<Chunk> chunks = new List<Chunk>();
+
         foreach (Vector3I chunkOffset in Utils.Every(Vector3I.Zero, Vector3I.One))
         {
             Chunk c = Terrain.ourInstance.TryGetChunk(ChunkIndex + chunkOffset);
 
-            if (c == null)
+            if (c != null)
             {
-                continue;
+                chunks.Add(c);
             }
+        }
 
-            Vector3I end = (Vector3I.One - chunkOffset) * (Resolution - 1);
+        foreach (Chunk c in chunks)
+        {
+            Vector3I offset = (c.ChunkIndex - ChunkIndex);
+
+            Vector3I end = (Vector3I.One - offset) * (Resolution - 1);
 
             foreach (Vector3I pos in Utils.Every(Vector3I.Zero, end))
             {
-                Vector3I at = pos + chunkOffset * Resolution;
+                Vector3I at = pos + offset * Resolution;
                 values[at.X, at.Y, at.Z] = (float)MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]) / (float)NodeCapacity;
                 colors[at.X, at.Y, at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]).RGB();
+            }
+        }
+
+        foreach (Vector3I index in Utils.Every(Vector3I.Zero, Vector3I.One * Resolution))
+        {
+            if (values[index.X, index.Y, index.Z] < 0.5f)
+            {
+                Vector3 total = Vector3.Zero;
+                float weight = 0f;
+
+                foreach (Vector3I other in Utils.Every(index - Vector3I.One, index + Vector3I.One))
+                {
+                    if (other[(int)other.MinAxisIndex()] < 0)
+                    {
+                        continue;
+                    }
+
+                    if (other[(int)other.MaxAxisIndex()] > Resolution)
+                    {
+                        continue;
+                    }
+
+                    float w = values[other.X, other.Y, other.Z];
+
+                    total += colors[other.X, other.Y, other.Z] * w;
+                    weight += w;
+                }
+
+                colors[index.X, index.Y, index.Z] = total / weight; 
             }
         }
 
