@@ -8,9 +8,10 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fq6ae"]
 
-[node name="Player" type="CharacterBody3D"]
+[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("myHUDText")]
 wall_min_slide_angle = 0.523599
 script = ExtResource("1_kne1u")
+myHUDText = NodePath("cameraPivot/cameraArm/playerCamera/HUDText")
 
 [node name="cameraPivot" type="Node3D" parent="."]
 
@@ -24,6 +25,23 @@ spring_length = 4.0
 position = Vector2(576, 324)
 scale = Vector2(0.1, 0.1)
 texture = ExtResource("2_e80uo")
+
+[node name="HUDText" type="Label" parent="cameraPivot/cameraArm/playerCamera"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = 38.5
+offset_right = 100.0
+offset_bottom = 61.5
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(100, 0)
+text = "text"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="meshPivot" type="Node3D" parent="."]
 

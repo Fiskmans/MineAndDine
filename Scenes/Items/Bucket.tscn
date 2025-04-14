@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3 uid="uid://cxatghrh4hwfs"]
 
 [ext_resource type="Script" uid="uid://b2qqqc5kfhsx4" path="res://Code/PickupObject/Tool/Bucket.cs" id="1_eoopj"]
-[ext_resource type="ArrayMesh" uid="uid://bbxp4h6l2pcyu" path="res://Assets/Misc/Bucket/Bucket.obj" id="2_7ys50"]
+[ext_resource type="ArrayMesh" uid="uid://nq2ko46lbeo4" path="res://Assets/Misc/Bucket/Bucket.obj" id="2_7ys50"]
 [ext_resource type="Material" uid="uid://81yv6v5220r6" path="res://Shaders/Wood.tres" id="2_kbh0f"]
 [ext_resource type="Script" uid="uid://dywr4qgnykatq" path="res://Code/Materials/Container.cs" id="5_3y50r"]
 
@@ -15,16 +15,6 @@ bottom_radius = 0.18
 height = 0.4
 rings = 0
 cap_bottom = false
-
-[sub_resource type="Animation" id="Animation_4jclf"]
-length = 0.001
-tracks/0/type = "position_3d"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.213847, 0)
 
 [sub_resource type="Animation" id="Animation_yskcf"]
 resource_name = "BucketFill"
@@ -42,6 +32,16 @@ tracks/1/path = NodePath(".")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = PackedFloat32Array(0, 1, 0.85, 0.001, 0.85, 1, 1, 1, 1, 1)
+
+[sub_resource type="Animation" id="Animation_4jclf"]
+length = 0.001
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.213847, 0)
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_yt518"]
 _data = {

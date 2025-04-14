@@ -12,13 +12,13 @@ namespace MineAndDine
     public partial class PickupObject : RigidBody3D
     {
         [Export]
-        public string myName { get; private set; }
+        public string myName { get; private set; } = "No name";
         protected PlayerController myHeldByPlayer;
         protected Mesh myMesh;
 
         public override void _Ready() 
         {
-            CollisionLayer = 2;
+            this.AddLayer(Code.Constants.CollisionLayer.Collision | Code.Constants.CollisionLayer.Interaction);
         }
 
         public virtual void Use()
