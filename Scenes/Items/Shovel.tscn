@@ -1,8 +1,8 @@
 [gd_scene load_steps=13 format=3 uid="uid://b4v88ceajd4oi"]
 
 [ext_resource type="Script" uid="uid://b7ujge12vq1yv" path="res://Code/PickupObject/Tool/Shovel.cs" id="1_gdkt8"]
-[ext_resource type="Texture2D" uid="uid://chhboc32hs4o8" path="res://Assets/Misc/Shovel/shovel_1K_BaseColor.jpg" id="2_uj8rh"]
-[ext_resource type="ArrayMesh" uid="uid://bvkwjwawx17ux" path="res://Assets/Misc/Shovel/shovel.obj" id="3_uefg2"]
+[ext_resource type="Texture2D" uid="uid://cshn8d0h2rtin" path="res://Assets/Misc/Shovel/shovel_1K_BaseColor.jpg" id="2_uj8rh"]
+[ext_resource type="ArrayMesh" uid="uid://l1pfq3togv7k" path="res://Assets/Misc/Shovel/shovel.obj" id="3_uefg2"]
 [ext_resource type="Script" uid="uid://dywr4qgnykatq" path="res://Code/Materials/Container.cs" id="4_x4ilx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5157u"]
@@ -56,6 +56,7 @@ _data = {
 collision_layer = 3
 script = ExtResource("1_gdkt8")
 myCapacity = 200
+myName = "Shovel"
 
 [node name="Shovel" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.015, 0, 0, 0, 0.015, 0, 0, 0, 0.015, -5.96046e-08, 1.49012e-08, 1.45519e-11)

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using static Godot.TextServer;
 using static MineAndDine.PickupObject;
+using MineAndDine.Code.Extensions;
 
 
 public partial class PlayerController : CharacterBody3D
@@ -32,6 +33,8 @@ public partial class PlayerController : CharacterBody3D
     private Camera3D myCamera;
     private Node3D myCameraPivot;
     public Node3D myHand { get; private set; }
+    [Export]
+    private Label myHUDText;
 
     private Vector3 myTargetVelocity = Vector3.Zero;
     private bool myIsSprinting = false;
@@ -48,12 +51,34 @@ public partial class PlayerController : CharacterBody3D
         myHand = GetNode<Node3D>("meshPivot/hand");
 
 		Input.MouseMode = Input.MouseModeEnum.Captured;
+        myHUDText.Visible = false;
 	}
 
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
         Terrain.ourInstance.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20, 20, 20)));
+
+        Dictionary intersection = DoRayCast((uint)MineAndDine.Code.Constants.CollisionLayer.Interaction);
+        if(intersection.Count > 0)
+        {
+            GodotObject obj = intersection["collider"].AsGodotObject();
+            
+            if(obj is PickupObject)
+            {
+                myHUDText.Visible = true;
+                myHUDText.Text = (obj as PickupObject)?.myName;
+            }
+            else
+            {
+                myHUDText.Visible = false;
+            }
+        }
+        else
+        {
+            myHUDText.Visible = false;
+        }
+
     }
 
 	public override void _PhysicsProcess(double delta)
@@ -191,7 +216,7 @@ public partial class PlayerController : CharacterBody3D
             return;
         }
 
-        Dictionary intersection = DoRayCast(2);
+        Dictionary intersection = DoRayCast((uint)MineAndDine.Code.Constants.CollisionLayer.Interaction);
 
         if (intersection.Count == 0) // Empty dictionary means no collision
         {
@@ -215,6 +240,7 @@ public partial class PlayerController : CharacterBody3D
     {
         myHeldObject?.Drop();
         myHeldObject = null;
+        myIsHoldingObject = false;
     }
 
     public Dictionary DoRayCast(uint aCollisionMask)
