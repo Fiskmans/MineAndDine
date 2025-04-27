@@ -10,6 +10,10 @@ namespace MineAndDine.Code.Extensions
             {
                 return false;
             }
+            if (aVerticies.Length % 3 != 0)
+            {
+                throw new System.ArgumentException("Verticies is not a multiple of 3");
+            }
 
             Godot.Collections.Array arrays = new Godot.Collections.Array();
             arrays.Resize((int)Mesh.ArrayType.Max);

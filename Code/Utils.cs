@@ -82,5 +82,10 @@ namespace MineAndDine
 
             return minimum;
         }
+
+        public static int CountPoints(Vector3I aVec)
+        {
+            return aVec.X * aVec.Y * aVec.Z;
+        }
     }
 }

@@ -19,16 +19,6 @@ size = Vector3(1.41919, 0.203125, 1.13477)
 [sub_resource type="SphereMesh" id="SphereMesh_l2bkf"]
 material = SubResource("StandardMaterial3D_x4ilx")
 
-[sub_resource type="Animation" id="Animation_wyagv"]
-length = 0.001
-tracks/0/type = "scale_3d"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Head/Content")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = PackedFloat32Array(0, 1, 0.01, 0.01, 0.01)
-
 [sub_resource type="Animation" id="Animation_jquqp"]
 resource_name = "ShovelFill"
 tracks/0/type = "position_3d"
@@ -46,6 +36,16 @@ tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = PackedFloat32Array(0, 1, 0.01, 0.01, 0.01, 1, 1, 0.3, 0.1, 0.2)
 
+[sub_resource type="Animation" id="Animation_wyagv"]
+length = 0.001
+tracks/0/type = "scale_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Head/Content")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0.01, 0.01, 0.01)
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_g0ve0"]
 _data = {
 &"Fill": SubResource("Animation_jquqp"),
@@ -53,7 +53,6 @@ _data = {
 }
 
 [node name="Shovel" type="RigidBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 collision_layer = 3
 script = ExtResource("1_gdkt8")
 myCapacity = 200

@@ -11,6 +11,7 @@ using System.Threading;
 using System.Linq;
 using MineAndDine.Code.Extensions;
 using MineAndDine.Code.Tests;
+using System.Threading.Tasks;
 
 public partial class GenerationTest : Test
 {
@@ -21,9 +22,8 @@ public partial class GenerationTest : Test
     public int mySize = 64;
 
     [Export]
-    public float myScale = 10.0f;
+    public float myScale = 8.0f;
 
-    static PackedScene WireFrameCube = GD.Load<PackedScene>("res://Scenes/Fragments/WireframeCube.tscn");
 
     struct Layer
     {
@@ -45,17 +45,16 @@ public partial class GenerationTest : Test
 
         base._Ready();
         MeshInstance3D child = new MeshInstance3D();
-        child.Scale = Vector3.One * (1.0f / mySize);
+        child.Position = Vector3.One * -0.5f;
 
         Mesh = new ArrayMesh();
         child.Mesh = Mesh;
         AddChild(child);
-        AddChild(WireFrameCube.Instantiate());
         myOffset = GlobalPosition;
 
         myDescription = $"Generation of {myMaterial.ToString()}";
 
-        Setstatus("Starting");
+        SetStatus("Starting");
 
         new Thread(GenerateLayers).Start();
     }
@@ -81,19 +80,20 @@ public partial class GenerationTest : Test
             }
 
             myLayers++;
-            Setstatus($"Layer {myLayers}: {layer.Verts.Length / 3} tris");
+            SetStatus($"Layer {myLayers}: {layer.Verts.Length / 3} tris");
 
             if (layer.Verts.Length == 0)
             {
                 break;
             }
 
-            Mesh.AddSurfaceFromVerticies(layer.Verts.Select(v => v - Vector3.One * mySize / 2).ToArray());
+            Mesh.AddSurfaceFromVerticies(layer.Verts);
 
             StandardMaterial3D material = new StandardMaterial3D();
 
             material.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
             material.AlbedoColor = layer.Color;
+            material.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
             
             Mesh.SurfaceSetMaterial(Mesh.GetSurfaceCount() - 1, material);
         }
@@ -101,21 +101,31 @@ public partial class GenerationTest : Test
 
     private void GenerateLayers()
     {
-        float[,,] data = new float[mySize, mySize, mySize];
+        int[,,] data = new int[mySize, mySize, mySize];
 
         MineAndDine.Noise.Noise generator = MaterialGroups.Generatable[myMaterial];
         Color color = MaterialGroups.Color[myMaterial];
 
         foreach (Vector3I pos in Utils.EveryIndex(Vector3I.Zero, Vector3I.One * mySize))
         {
-            data[pos.X, pos.Y, pos.Z] = generator.Generate((Vector3)pos - Vector3.One * mySize / 2 + myOffset);
+            data[pos.X, pos.Y, pos.Z] = (int)generator.Generate((Vector3)pos - Vector3.One * mySize / 2 + myOffset);
         }
 
-        for (int i = 0; i < 256; i += 10)
-        {
-            MarchingCubes cubes = new MarchingCubes(data, i);
+        MarchingCubes cubes = new MarchingCubes(Vector3I.One * mySize);
 
-            myNewLayers.Enqueue(new Layer { Color = new Color(color) { A = 0.5f + 0.3f * (float)i/256 }, Verts = cubes.Calculate() });
+        List<Task<Vector3[]>> tasks = new List<Task<Vector3[]>>();
+
+        for (uint i = 0; i < 256; i += 10)
+        {
+            tasks.Add(cubes.Calculate(data, i, 1f / mySize));
+        }
+
+        while (tasks.Count > 0)
+        {
+            int index = Task.WaitAny(tasks.ToArray());
+
+            myNewLayers.Enqueue(new Layer { Color = new Color(color) { A = 0.5f }, Verts = tasks[index].Result });
+            tasks.RemoveAt(index);
         }
 
         myNewLayers.Enqueue(new Layer { Final = true });

@@ -7,11 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Array = Godot.Collections.Array;
 
 public partial class Chunk : Node3D
 {
-    public const float Size = 16;
+    public const float Size = 8;
     public const int Resolution = 16;
     public const byte NodeCapacity = 127;
     private const Image.Format myColorFormat = Image.Format.Rgb8;
@@ -40,6 +41,8 @@ public partial class Chunk : Node3D
     private bool myIsDirty = true;
     private MeshInfo myNewMesh = null;
 
+
+    static MarchingCubes myMarchingCubes = new MarchingCubes(Vector3I.One * (Resolution + 1));
     ImageTexture3D myTexture = new ImageTexture3D();
     ArrayMesh myMesh = new ArrayMesh();
     ConcavePolygonShape3D myCollisionMesh;
@@ -205,7 +208,7 @@ public partial class Chunk : Node3D
 
     public Vector3 WorldPosFromNodePos(Vector3I aVoxelPos)
     {
-        return (Vector3)aVoxelPos * Size / Resolution + Position;
+        return (Vector3)aVoxelPos * (float)Size / (float)Resolution + Position;
     }
 
     public IEnumerable<Vector3I> AffectedNodes(Aabb aArea)
@@ -241,7 +244,7 @@ public partial class Chunk : Node3D
     }
 
     // Adaptation of https://paulbourke.net/geometry/polygonise/
-    public void RegenerateMesh()
+    public async Task RegenerateMeshAsync()
     {
         if (!myIsDirty)
             return;
@@ -249,7 +252,7 @@ public partial class Chunk : Node3D
         Stopwatch watch = new Stopwatch();
         watch.Start();
 
-        float[,,] values = new float[Resolution + 1, Resolution + 1, Resolution + 1];
+        int[,,] values = new int[Resolution + 1, Resolution + 1, Resolution + 1];
         Vector3[,,] colors = new Vector3[Resolution + 1, Resolution + 1, Resolution + 1];
 
         for (int x = 0; x <= Resolution; x++)
@@ -258,7 +261,7 @@ public partial class Chunk : Node3D
             {
                 for (int z = 0; z <= Resolution; z++)
                 {
-                    values[x, y, z] = 0.0f;
+                    values[x, y, z] = 0;
                     colors[x, y, z] = Vector3.Zero;
                 }
             }
@@ -285,7 +288,7 @@ public partial class Chunk : Node3D
             foreach (Vector3I pos in Utils.Every(Vector3I.Zero, end))
             {
                 Vector3I at = pos + offset * Resolution;
-                values[at.X, at.Y, at.Z] = (float)MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]) / (float)NodeCapacity;
+                values[at.X, at.Y, at.Z] = MaterialInteractions.Total(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]);
                 colors[at.X, at.Y, at.Z] = MaterialInteractions.Color(ref c.myTerrainNodes[pos.X, pos.Y, pos.Z]).RGB();
             }
         }
@@ -295,7 +298,7 @@ public partial class Chunk : Node3D
             if (values[index.X, index.Y, index.Z] < 0.5f)
             {
                 Vector3 total = Vector3.Zero;
-                float weight = 0f;
+                int weight = 0;
 
                 foreach (Vector3I other in Utils.Every(index - Vector3I.One, index + Vector3I.One))
                 {
@@ -309,7 +312,7 @@ public partial class Chunk : Node3D
                         continue;
                     }
 
-                    float w = values[other.X, other.Y, other.Z];
+                    int w = values[other.X, other.Y, other.Z];
 
                     total += colors[other.X, other.Y, other.Z] * w;
                     weight += w;
@@ -319,9 +322,9 @@ public partial class Chunk : Node3D
             }
         }
 
-        MarchingCubes marching = new MarchingCubes(values);
+        float scale = (float)Size / (float)Resolution;
 
-        Vector3[] vertices = marching.Calculate();
+        Vector3[] vertices = await myMarchingCubes.Calculate(values, 128, scale);
 
         // Initialize the ArrayMesh.
         Array arrays = new Array();
@@ -365,6 +368,7 @@ public partial class Chunk : Node3D
         if (watch.ElapsedMilliseconds > 20)
         {
             GD.Print("Remesh ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms ");
+            GD.Print($" color at 0,0,0: {colors[0, 0, 0]}");
         }
     }
 

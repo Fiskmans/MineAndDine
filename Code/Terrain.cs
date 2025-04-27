@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 public partial class Terrain : Node3D
 {
@@ -54,7 +55,13 @@ public partial class Terrain : Node3D
 
         for (int i = 0; i < myThreads; i++)
         {
-            myWorkerThreads.Add(new Thread(DoTerrainUpdates));
+            myWorkerThreads.Add(new Thread(() =>
+            {
+                while (true)
+                {
+                    DoTerrainUpdate().Wait();
+                }
+            }));
         }
 
         foreach (Thread thread in myWorkerThreads)
@@ -121,28 +128,25 @@ public partial class Terrain : Node3D
         return chunks;
     }
 
-    private void DoTerrainUpdates()
+    private async Task DoTerrainUpdate()
     {
-        while (true) // TODO, prolly clean this thread up lol
+        ChunkTask task;
+        if (!myTaskList.TryDequeue(out task))
         {
-            ChunkTask task;
-            if (!myTaskList.TryDequeue(out task))
-            {
-                Thread.Yield();
-                continue;
-            }
+            Thread.Yield();
+            return;
+        }
 
-            Chunk chunk = task.Chunk;
+        Chunk chunk = task.Chunk;
 
-            if (task.Update)
-            {
-                chunk.Update();
-            }
+        if (task.Update)
+        {
+            chunk.Update();
+        }
 
-            if (task.Remesh)
-            {
-                chunk.RegenerateMesh();
-            }
+        if (task.Remesh)
+        {
+            await chunk.RegenerateMeshAsync();
         }
     }
 
