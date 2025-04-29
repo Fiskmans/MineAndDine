@@ -17,6 +17,7 @@ points = PackedVector3Array(0.45, 0.2, 0.1, 0.45, 0.2, -0.1, -0.45, -0.2, 0.1, 0
 script = ExtResource("1_ueybr")
 myGhost = ExtResource("2_ggjxx")
 myPlaced = ExtResource("3_wxyw2")
+myName = "Ramp"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("PrismMesh_rkbnw")
