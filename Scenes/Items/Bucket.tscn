@@ -1,7 +1,7 @@
 [gd_scene load_steps=10 format=3 uid="uid://cxatghrh4hwfs"]
 
 [ext_resource type="Script" uid="uid://b2qqqc5kfhsx4" path="res://Code/PickupObject/Tool/Bucket.cs" id="1_eoopj"]
-[ext_resource type="ArrayMesh" uid="uid://nq2ko46lbeo4" path="res://Assets/Misc/Bucket/Bucket.obj" id="2_7ys50"]
+[ext_resource type="ArrayMesh" uid="uid://bbxp4h6l2pcyu" path="res://Assets/Misc/Bucket/Bucket.obj" id="2_7ys50"]
 [ext_resource type="Material" uid="uid://81yv6v5220r6" path="res://Shaders/Wood.tres" id="2_kbh0f"]
 [ext_resource type="Script" uid="uid://dywr4qgnykatq" path="res://Code/Materials/Container.cs" id="5_3y50r"]
 

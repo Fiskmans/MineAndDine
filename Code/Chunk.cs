@@ -368,7 +368,6 @@ public partial class Chunk : Node3D
         if (watch.ElapsedMilliseconds > 20)
         {
             GD.Print("Remesh ", ChunkIndex, " took ", watch.ElapsedMilliseconds, "ms ");
-            GD.Print($" color at 0,0,0: {colors[0, 0, 0]}");
         }
     }
 

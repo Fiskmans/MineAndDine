@@ -88,9 +88,7 @@ public partial class Container : MeshInstance3D
 
         myAmount = amount;
 
-        GD.Print($"Refreshed: {this} {Fraction}");
-
         myFillAnimation?.Seek(Fraction, true);
-        (Mesh.SurfaceGetMaterial(0) as ShaderMaterial)?.SetShaderParameter("albedo_color", MaterialInteractions.Color(ref _Contents));
+        (Mesh.SurfaceGetMaterial(0) as ShaderMaterial)?.SetShaderParameter("albedo_color", MaterialInteractions.Color(ref _Contents)); // TODO: figure out why this doesnt work
     }
 }

@@ -91,8 +91,6 @@ namespace MineAndDine
 
                 node = node.Offset(Vector3I.Up);
             }
-
-            GD.Print("After deposit: ", myContainer);
         }
     }
 }

@@ -1,12 +1,13 @@
-[gd_scene load_steps=12 format=3 uid="uid://mwujfi7brask"]
+[gd_scene load_steps=13 format=3 uid="uid://mwujfi7brask"]
 
 [ext_resource type="PackedScene" uid="uid://b4rpye8vb2np0" path="res://Scenes/Player.tscn" id="1_lyqml"]
 [ext_resource type="PackedScene" uid="uid://tjytwoehaf0n" path="res://Scenes/Fragments/gizmo.tscn" id="3_1tp12"]
 [ext_resource type="Script" uid="uid://didpr6lmh12vs" path="res://Code/Terrain.cs" id="4_1tp12"]
-[ext_resource type="PackedScene" uid="uid://b4v88ceajd4oi" path="res://Scenes/Items/Shovel.tscn" id="4_42jam"]
+[ext_resource type="PackedScene" uid="uid://d25axitw1bomr" path="res://Scenes/Items/shovel.tscn" id="4_42jam"]
 [ext_resource type="PackedScene" uid="uid://cw56ec48p7lo" path="res://Scenes/Items/anchor.tscn" id="5_k5cj5"]
 [ext_resource type="PackedScene" uid="uid://b3s0o6ur3fu0x" path="res://Scenes/Items/archimedian_screw.tscn" id="6_lyqml"]
 [ext_resource type="PackedScene" uid="uid://cxatghrh4hwfs" path="res://Scenes/Items/Bucket.tscn" id="7_42jam"]
+[ext_resource type="PackedScene" uid="uid://ckgn5xfc1clhs" path="res://Scenes/Items/ItemPlatform.tscn" id="8_k5cj5"]
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_actfc"]
 
@@ -48,15 +49,16 @@ myMiningPower = 10.0
 
 [node name="Anchor" parent="." instance=ExtResource("5_k5cj5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75066, 3.09823, 0)
-myName = ""
 
 [node name="Structures" type="Node3D" parent="."]
 
 [node name="ArchimedianScrew" parent="." instance=ExtResource("6_lyqml")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.27844, 0, 8.15234)
-myName = ""
 
 [node name="Gizmo" parent="." instance=ExtResource("3_1tp12")]
 
 [node name="Bucket" parent="." instance=ExtResource("7_42jam")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.82232, 1.90396, 3.81132)
+
+[node name="PlatformItem" parent="." instance=ExtResource("8_k5cj5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.78232, 0, -1.38679)

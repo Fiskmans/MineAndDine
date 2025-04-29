@@ -54,6 +54,19 @@ namespace MineAndDine
 
             myContainer.TakeFrom(ref node.Get(), MaterialGroups.Loose);
             Terrain.ourInstance.RegisterModification(node.chunk);
+
+            foreach (Vector3I offset in Utils.CardinalDirections)
+            {
+                Chunk.NodeIndex next = node.Offset(offset);
+
+                if (!next.InBounds())
+                {
+                    continue;
+                }
+
+                myContainer.TakeFrom(ref next.Get(), MaterialGroups.Loose);
+                Terrain.ourInstance.RegisterModification(next.chunk);
+            }
         }
     }
 }

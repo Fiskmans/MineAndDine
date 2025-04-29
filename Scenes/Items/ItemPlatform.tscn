@@ -1,0 +1,26 @@
+[gd_scene load_steps=7 format=3 uid="uid://ckgn5xfc1clhs"]
+
+[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://Code/PickupObject/Placable.cs" id="1_nr3jc"]
+[ext_resource type="Material" uid="uid://81yv6v5220r6" path="res://Shaders/Wood.tres" id="1_q5sep"]
+[ext_resource type="PackedScene" uid="uid://dauyu30y8im4t" path="res://Scenes/Fragments/Structures/StructurePlatform.tscn" id="2_8cuqk"]
+[ext_resource type="PackedScene" uid="uid://rvb4qpqsxm42" path="res://Scenes/Fragments/Structures/GhostPlatform.tscn" id="2_ga5ed"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dq1fp"]
+size = Vector3(0.9, 0.3, 0.9)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ba22e"]
+material = ExtResource("1_q5sep")
+size = Vector3(0.9, 0.3, 0.9)
+
+[node name="PlatformItem" type="RigidBody3D"]
+collision_layer = 3
+script = ExtResource("1_nr3jc")
+myGhost = ExtResource("2_ga5ed")
+myPlaced = ExtResource("2_8cuqk")
+myName = "Platform"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_dq1fp")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_ba22e")

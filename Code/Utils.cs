@@ -10,6 +10,16 @@ namespace MineAndDine
 {
     internal class Utils
     {
+        public static readonly Vector3I[] CardinalDirections =
+            [
+                Vector3I.Up,
+                Vector3I.Down,
+                Vector3I.Left,
+                Vector3I.Right,
+                Vector3I.Forward,
+                Vector3I.Back
+            ];
+
         public static bool AreTerrainPrintsEnabled()
         {
             return false;
