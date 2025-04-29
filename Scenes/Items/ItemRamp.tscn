@@ -1,0 +1,25 @@
+[gd_scene load_steps=7 format=3 uid="uid://di4tl0jjveaci"]
+
+[ext_resource type="Script" uid="uid://b33o2xjgbfnl5" path="res://Code/PickupObject/Placable.cs" id="1_ueybr"]
+[ext_resource type="PackedScene" uid="uid://bdj4ihjfwiq52" path="res://Scenes/Fragments/Structures/GhostRamp.tscn" id="2_ggjxx"]
+[ext_resource type="Material" uid="uid://81yv6v5220r6" path="res://Shaders/Wood.tres" id="2_twuda"]
+[ext_resource type="PackedScene" uid="uid://b0rh3fuee7520" path="res://Scenes/Fragments/Structures/StructureRamp.tscn" id="3_wxyw2"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_rkbnw"]
+material = ExtResource("2_twuda")
+left_to_right = 1.0
+size = Vector3(0.9, 0.4, 0.2)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_ueybr"]
+points = PackedVector3Array(0.45, 0.2, 0.1, 0.45, 0.2, -0.1, -0.45, -0.2, 0.1, 0.45, -0.2, 0.1, 0.45, -0.2, -0.1, -0.45, -0.2, -0.1)
+
+[node name="ItemRamp" type="RigidBody3D"]
+script = ExtResource("1_ueybr")
+myGhost = ExtResource("2_ggjxx")
+myPlaced = ExtResource("3_wxyw2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("PrismMesh_rkbnw")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("ConvexPolygonShape3D_ueybr")

@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://bdj4ihjfwiq52"]
+
+[ext_resource type="Material" uid="uid://ctit7iipapiq4" path="res://Shaders/WoodGhost.tres" id="1_8y1ps"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_d66e1"]
+material = ExtResource("1_8y1ps")
+left_to_right = 1.0
+size = Vector3(7, 3, 1)
+
+[node name="MeshInstance3D" type="MeshInstance3D"]
+mesh = SubResource("PrismMesh_d66e1")
