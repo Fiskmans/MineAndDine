@@ -50,7 +50,7 @@ namespace MineAndDine
         {
             return new Vector3(
                     Mathf.Lerp(a.X,b.X,weight),
-                    Mathf.Lerp(a.Y,b.Y, weight),
+                    Mathf.Lerp(a.Y,b.Y,weight),
                     Mathf.Lerp(a.Z,b.Z,weight));
         }
 

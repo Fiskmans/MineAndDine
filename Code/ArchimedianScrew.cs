@@ -60,7 +60,7 @@ public partial class ArchimedianScrew : Node3D
                     break;
                 }
 
-                if (MaterialInteractions.Move(MaterialGroups.Loose, ref next.Get(), ref at.Get(), Chunk.NodeCapacity))
+                if (MaterialInteractions.Move(MaterialGroups.Loose, ref next.Get(), ref at.Get(), Chunk.SelfCompactingLimit))
                 {
                     Terrain.ourInstance.RegisterModification(next.chunk);
                     Terrain.ourInstance.RegisterModification(at.chunk);

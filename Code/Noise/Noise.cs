@@ -22,5 +22,9 @@ namespace MineAndDine.Noise
         {
             return new CompoundNoise(this, new LambdaNoise(aFunc), aMode);
         }
+        public Noise Amplitude(float aScale)
+        {
+            return new AmplitudeNoise(this, aScale);
+        }
     }
 }

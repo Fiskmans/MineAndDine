@@ -79,7 +79,7 @@ namespace MineAndDine.Materials
 
             int deltaToBalance = (delta - aTargetDelta) / 2;
 
-            int amount = Utils.Min(deltaToBalance, aFrom[myType], Chunk.NodeCapacity - MaterialInteractions.Total(ref aTo.Get()));
+            int amount = Utils.Min(deltaToBalance, aFrom[myType], Chunk.SelfCompactingLimit - MaterialInteractions.Total(ref aTo.Get()));
 
             if (amount < myMinimumMoveAmount)
             {

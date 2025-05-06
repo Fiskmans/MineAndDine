@@ -12,8 +12,6 @@ namespace MineAndDine
     internal partial class Shovel : Tool
     {
         [Export]
-        public int myCapacity { get; private set; }
-        [Export]
         public float myMiningRadius { get; private set; } = 5;
         [Export]
         public float myMiningPower { get; private set; } = 1;

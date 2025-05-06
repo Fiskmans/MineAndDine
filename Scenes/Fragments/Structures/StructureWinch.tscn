@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://bootqrgnwnfsw"]
+
+[ext_resource type="PackedScene" uid="uid://c4vq1jjoghv2p" path="res://Assets/Structures/Winch.blend" id="1_gujsn"]
+
+[node name="Node3D" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+
+[node name="Winch" parent="." instance=ExtResource("1_gujsn")]
+
+[editable path="Winch"]

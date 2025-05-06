@@ -17,6 +17,7 @@ namespace MineAndDine.Code.Materials
     public enum MaterialType : int
     {
         Dirt,
+        Stone,
         Coal,
         CoalDust,
         Gold,
@@ -40,6 +41,7 @@ namespace MineAndDine.Code.Materials
             }
         }
     }
+
 
     public static class MaterialExtensions
     {
@@ -128,7 +130,7 @@ namespace MineAndDine.Code.Materials
         {
             T sum = default;
 
-            aList.Foreach(MaterialGroups.Color, (type, amount, color) =>
+            aList.Foreach(MaterialGroups.All, (type, amount, placeholder) =>
             {
                 sum += amount;
             });

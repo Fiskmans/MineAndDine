@@ -39,9 +39,7 @@ public partial class Terrain : Node3D
     }
 
     ConcurrentQueue<ChunkTask> myTaskList = new ConcurrentQueue<ChunkTask>();
-
     ConcurrentQueue<Chunk> myModifiedChunks = new ConcurrentQueue<Chunk>();
-
     ConcurrentQueue<Chunk> myChunksToRemesh = new ConcurrentQueue<Chunk>();
 
     // Called when the node enters the scene tree for the first time.

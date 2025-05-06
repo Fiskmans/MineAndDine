@@ -63,7 +63,7 @@ namespace MineAndDine
             myRenderDevice = RenderingServer.CreateLocalRenderingDevice();
 
             myDataSize = Utils.CountPoints(mySize) * sizeof(int);
-            myMaxTris = (uint)Math.Max(Utils.CountPoints(mySize - Vector3I.One), 64);
+            myMaxTris = (uint)Utils.CountPoints(mySize - Vector3I.One) * 5;
             myTriDataSize = (int)myMaxTris * sizeof(float) * 3 * 3;
             
             GD.Print($"Size {mySize} TriSize {myTriDataSize}");
@@ -140,6 +140,8 @@ namespace MineAndDine
                     | (uint)triCountBytes[1] << 8
                     | (uint)triCountBytes[2] << 16
                     | (uint)triCountBytes[3] << 24;
+
+                triCount = Math.Min(triCount, myMaxTris);
                 
                 float[] resultFloats = new float[triCount * 12];
                 byte[] outputBytes = myRenderDevice.BufferGetData(myGPUTriBufferOutputId, 0, (uint)resultFloats.Length * sizeof(float));

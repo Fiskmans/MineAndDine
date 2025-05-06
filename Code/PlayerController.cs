@@ -26,7 +26,7 @@ public partial class PlayerController : CharacterBody3D
     public float myJumpStrength { get; set; } = 5;
 
     [Export(PropertyHint.Range, "0.f,1.f,0.01f")]
-    float myCameraSensitivity = 0.01f;
+    float myCameraSensitivity = 0.005f;
     [Export(PropertyHint.Range, "0.f,360.f,1.f,radians_as_degrees")]
     float myCameraTiltLimit = Mathf.DegToRad(75);
 
@@ -46,9 +46,9 @@ public partial class PlayerController : CharacterBody3D
     public override void _Ready()
     {
         myCameraPivot = GetNode<Node3D>("cameraPivot"); //Spawn this stuff instead?
-        myCamera = GetNode<Camera3D>("cameraPivot/cameraArm/playerCamera");
+        myCamera = GetNode<Camera3D>("cameraPivot/playerCamera");
 
-        myHand = GetNode<Node3D>("meshPivot/hand");
+        myHand = GetNode<Node3D>("cameraPivot/playerCamera/hand");
 
 		Input.MouseMode = Input.MouseModeEnum.Captured;
         myHUDText.Visible = false;
@@ -57,7 +57,7 @@ public partial class PlayerController : CharacterBody3D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
-        Terrain.ourInstance.Touch(new Aabb(Position - new Vector3(10, 10, 10), new Vector3(20, 20, 20)));
+        Terrain.ourInstance.Touch(new Aabb(Position - new Vector3(30, 10, 30), new Vector3(60, 20, 60)));
 
         Dictionary intersection = DoRayCast((uint)MineAndDine.Code.Constants.CollisionLayer.Interaction);
         if(intersection.Count > 0)

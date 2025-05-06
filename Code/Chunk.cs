@@ -12,9 +12,9 @@ using Array = Godot.Collections.Array;
 
 public partial class Chunk : Node3D
 {
-    public const float Size = 8;
-    public const int Resolution = 16;
-    public const byte NodeCapacity = 127;
+    public const float Size = 4;
+    public const int Resolution = 4;
+    public const byte SelfCompactingLimit = 15;
     private const Image.Format myColorFormat = Image.Format.Rgb8;
 
     private Vector3I _ChunkIndex;
@@ -222,14 +222,14 @@ public partial class Chunk : Node3D
 
     public static NodeIndex NodeAt(Vector3 aWorldPos)
     {
-        Chunk c = Terrain.ourInstance.TryGetChunk(Vector3I.Zero); // TODO this is jank
+        Chunk chunk = Terrain.ourInstance.TryGetChunk(Vector3I.Zero); // TODO this is jank
 
-        if (c == null)
+        if (chunk == null)
         {
             return new NodeIndex { chunk = null };
         }
 
-        return c.NodeAt(c.NodePosFromWorldPos(aWorldPos));
+        return chunk.NodeAt(chunk.NodePosFromWorldPos(aWorldPos));
     }
 
     public NodeIndex NodeAt(Vector3I aIndex)
@@ -293,38 +293,9 @@ public partial class Chunk : Node3D
             }
         }
 
-        foreach (Vector3I index in Utils.Every(Vector3I.Zero, Vector3I.One * Resolution))
-        {
-            if (values[index.X, index.Y, index.Z] < 0.5f)
-            {
-                Vector3 total = Vector3.Zero;
-                int weight = 0;
-
-                foreach (Vector3I other in Utils.Every(index - Vector3I.One, index + Vector3I.One))
-                {
-                    if (other[(int)other.MinAxisIndex()] < 0)
-                    {
-                        continue;
-                    }
-
-                    if (other[(int)other.MaxAxisIndex()] > Resolution)
-                    {
-                        continue;
-                    }
-
-                    int w = values[other.X, other.Y, other.Z];
-
-                    total += colors[other.X, other.Y, other.Z] * w;
-                    weight += w;
-                }
-
-                colors[index.X, index.Y, index.Z] = total / weight; 
-            }
-        }
-
         float scale = (float)Size / (float)Resolution;
 
-        Vector3[] vertices = await myMarchingCubes.Calculate(values, 128, scale);
+        Vector3[] vertices = await myMarchingCubes.Calculate(values, 16, scale);
 
         // Initialize the ArrayMesh.
         Array arrays = new Array();

@@ -48,7 +48,7 @@ namespace MineAndDine
 
             Freeze = true;
             this.RemoveLayer(Code.Constants.CollisionLayer.Collision | Code.Constants.CollisionLayer.Interaction);
-            GlobalPosition = myHeldByPlayer.myHand.GlobalPosition;
+            Position = Vector3.Zero;
             Rotation = Vector3.Zero;
         }
 

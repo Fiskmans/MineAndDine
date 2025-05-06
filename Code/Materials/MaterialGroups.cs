@@ -36,20 +36,26 @@ namespace MineAndDine.Code.Materials
                 val = new PlaceHolder(); // we wanna put literally anything here so the filters work
             }
 
-            Loose[MaterialType.Dirt] = new LooseMaterial(MaterialType.Dirt, -100, 10, 40);
+            Loose[MaterialType.Dirt] = new LooseMaterial(MaterialType.Dirt, -10, 1, 4);
 
             Color[MaterialType.Dirt] = new Color(0.8f, 0.6f, 0.2f);
             Color[MaterialType.Coal] = new Color(0.01f, 0.01f, 0.02f);
             Color[MaterialType.CoalDust] = new Color(0.4f, 0.4f, 0.5f);
             Color[MaterialType.Gold] = new Color(0.8f, 0.0f, 0.0f);
 
-            Noise.Noise height = new PerlinNoise().Axles(new Vector3I(1, 0, 1)).Scale(1.0f).Height(50.0f);
+            Noise.Noise height = new PerlinNoise()
+                                        .Axis(new Vector3I(1, 0, 1))
+                                        .Frequency(1.0f)
+                                        .Amplitude(50.0f);
 
-            Noise.Noise ground = new LambdaNoise((pos) => Utils.Sigmoid(-(pos.Y + height.Generate(pos) - 20.0f) * 3.0f) * 160);
 
-            Generatable[MaterialType.Dirt] = ground;
+            Noise.Noise ground = new LambdaNoise((pos) => Utils.Sigmoid(-(pos.Y + height.Generate(pos) - 20.0f) * 3.0f));
 
-            Generatable[MaterialType.Coal] = new PerlinNoise().Height(60);
+            Generatable[MaterialType.Dirt] = ground.Amplitude(20.0f);
+
+            Generatable[MaterialType.Coal] = new PerlinNoise()
+                                                    .Combine(ground, CompoundNoise.Mode.Multiply)
+                                                    .Amplitude(10.0f);
             //Generatable[MaterialType.Gold] = new PerlinNoise().Scale(10.0f).Height(0.1f)
             //                                    .Combine(ground, CompoundNoise.Mode.Multiply);
 

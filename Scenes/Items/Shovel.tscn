@@ -55,20 +55,19 @@ _data = {
 [node name="Shovel" type="RigidBody3D"]
 collision_layer = 3
 script = ExtResource("1_gdkt8")
-myCapacity = 200
 myName = "Shovel"
 
 [node name="Shovel" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.015, 0, 0, 0, 0.015, 0, 0, 0, 0.015, -5.96046e-08, 1.49012e-08, 1.45519e-11)
+transform = Transform3D(-6.55671e-10, 0, 0.015, 0, 0.015, 0, -0.015, 0, -6.55671e-10, 0.00169186, 1.49012e-08, 0.131834)
 material_override = SubResource("StandardMaterial3D_5157u")
 mesh = ExtResource("3_uefg2")
 
 [node name="Shaft" type="CollisionShape3D" parent="."]
-transform = Transform3D(-6.55671e-09, -0.15, 0, 0.15, -6.55671e-09, 0, 0, 0, 0.15, -0.162571, 0.023224, 0)
+transform = Transform3D(2.86603e-16, 6.55671e-09, 0.15, 0.15, -6.55671e-09, 0, 6.55671e-09, 0.15, -6.55671e-09, 0.00169188, 0.023224, 0.294405)
 shape = SubResource("CapsuleShape3D_gdkt8")
 
 [node name="Head" type="CollisionShape3D" parent="."]
-transform = Transform3D(0.259375, -0.150748, 0, 0.150748, 0.259375, 0, 0, 0, 0.3, 0.557879, 0.102941, 0.000195312)
+transform = Transform3D(-1.13376e-08, 6.5894e-09, 0.3, 0.150748, 0.259375, 0, -0.259375, 0.150748, -1.31134e-08, 0.00188716, 0.102941, -0.426045)
 shape = SubResource("BoxShape3D_gdkt8")
 
 [node name="Content" type="MeshInstance3D" parent="Head"]
@@ -76,7 +75,7 @@ transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.57, 0.09, 0)
 mesh = SubResource("SphereMesh_l2bkf")
 skeleton = NodePath("../..")
 script = ExtResource("4_x4ilx")
-myCapacity = 200
+myCapacity = 20
 
 [node name="Fill" type="AnimationPlayer" parent="Head/Content"]
 root_node = NodePath("../../..")
